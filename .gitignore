@@ -1,0 +1,12 @@
+node_modules/
+StudentManagerApp/node_modules/
+StudentManagerHub/.gradle/
+StudentManagerHub/build/
+StudentManagerHub/app/build/
+StudentManagerApp/android/app/build/
+StudentManagerApp/.expo/
+*.apk
+*.aab
+*.log
+.env
+.env.local

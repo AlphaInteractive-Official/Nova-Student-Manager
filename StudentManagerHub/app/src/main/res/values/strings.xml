@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Student Manager Hub</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_registry">Registry</string>
+    <string name="nav_attendance">Attendance</string>
+    <string name="nav_marks">Marks</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_settings">Settings</string>
+    <string name="title_calculator">Percentage Calculator</string>
+    <string name="title_reports">Reports</string>
+
+    <!-- Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_open">Open</string>
+    <string name="action_add">Add</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_quick_actions">Quick actions</string>
+    <string name="dashboard_overview">Overview</string>
+    <string name="dashboard_stat_total_students">Total students</string>
+    <string name="dashboard_stat_attendance_today">Today\'s attendance</string>
+    <string name="dashboard_stat_present">Present</string>
+    <string name="dashboard_stat_absent">Absent</string>
+    <string name="dashboard_stat_average_marks">Average marks</string>
+    <string name="dashboard_stat_classes_today">Classes today</string>
+    <string name="dashboard_upcoming_classes">Upcoming classes</string>
+    <string name="dashboard_recent_students">Recently added</string>
+    <string name="dashboard_needs_attention">Requires attention</string>
+
+    <string name="quick_add_student">Add Student</string>
+    <string name="quick_mark_attendance">Mark Attendance</string>
+    <string name="quick_add_marks">Add Marks</string>
+    <string name="quick_schedule_class">Schedule Class</string>
+    <string name="quick_calculator">Calculator</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_system_desc">Follow the device light/dark setting</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notification_enable">Enable notifications</string>
+    <string name="settings_notification_reminder">Default reminder</string>
+    <string name="settings_notification_sound">Sound</string>
+    <string name="settings_notification_vibration">Vibration</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_backup">Backup</string>
+    <string name="settings_data_restore">Restore</string>
+    <string name="settings_data_export">Export</string>
+    <string name="settings_data_clear">Clear all data</string>
+    <string name="settings_application">Application</string>
+    <string name="settings_version">App version</string>
+    <string name="settings_about">About</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_desc">All student data is stored only on this device. Nothing is uploaded.</string>
+    <string name="settings_coming_soon">Available in a later stage</string>
+
+    <!-- Empty states -->
+    <string name="empty_no_students">No students yet</string>
+    <string name="empty_no_students_desc">Add your first student to start building your digital register.</string>
+    <string name="empty_no_classes">No classes scheduled</string>
+    <string name="empty_no_classes_desc">Your upcoming classes will appear here.</string>
+    <string name="empty_no_data">Nothing to show yet</string>
+    <string name="empty_no_data_desc">This section fills up as you add records.</string>
+</resources>
