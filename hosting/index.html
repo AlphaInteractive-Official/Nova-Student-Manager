@@ -1198,6 +1198,14 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+    <div class="sidebar-teacher-card" data-action="open-teacher-switcher" style="margin:4px 12px 10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer" title="Click to switch teacher account">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800">👨‍🏫</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:9.5px;font-weight:750;text-transform:uppercase;color:var(--muted);letter-spacing:.03em">Active Teacher</div>
+        <div style="font-weight:750;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="sidebarTeacherName">Teacher 1</div>
+      </div>
+      <span style="font-size:10.5px;font-weight:700;color:var(--primary);background:var(--primary-soft);padding:2px 6px;border-radius:6px">Switch</span>
+    </div>
     <nav class="nav" id="nav"></nav>
     <div class="sidebar-foot">
       <p class="hint">Created by Alpha Interactive</p>
@@ -1209,6 +1217,11 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
     <header id="topbar">
       <button class="icon-btn menu-btn" data-action="toggle-sidebar" aria-label="Open navigation">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button type="button" class="btn sm" data-action="open-teacher-switcher" id="topbarTeacherBtn" style="height:36px;padding:0 9px;border-radius:10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0" title="Switch Teacher Account">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--success)"></span>
+        <span id="topbarTeacherName">Teacher 1</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div class="search-wrap">
@@ -1420,8 +1433,134 @@ function debounce(fn, ms){
 /* ==========================================================================
    JAVASCRIPT — STATE & STORAGE
    ========================================================================== */
-var STORAGE_KEY = 'smh_data_v1';
+var TEACHERS_KEY = 'smh_teachers_v1';
+var ACTIVE_TEACHER_KEY = 'smh_active_teacher_id';
+
+function getTeachersList(){
+  var raw = safeGetItem(TEACHERS_KEY);
+  if(raw){
+    try {
+      var arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length) return arr;
+    } catch(e){}
+  }
+  return [
+    { id: 'teacher_1', name: 'Ustadh (Teacher 1)', key: 'smh_data_v1', academy: 'AL Momina Online Islamic Academy' },
+    { id: 'teacher_2', name: 'Muallim (Teacher 2)', key: 'smh_data_v1_teacher_2', academy: 'Dare Arqam Online Islamic Academy' }
+  ];
+}
+
+function getActiveTeacherId(){
+  return safeGetItem(ACTIVE_TEACHER_KEY) || 'teacher_1';
+}
+
+function getActiveTeacher(){
+  var tid = getActiveTeacherId();
+  var list = getTeachersList();
+  for(var i = 0; i < list.length; i++){
+    if(list[i].id === tid) return list[i];
+  }
+  return list[0];
+}
+
+function getStorageKey(){
+  var t = getActiveTeacher();
+  return t ? t.key : 'smh_data_v1';
+}
+
+var STORAGE_KEY = getStorageKey();
 var NOTIFY_KEY  = 'smh_notified_v1';
+
+function updateTeacherBadges(){
+  var t = getActiveTeacher();
+  var topName = document.getElementById('topbarTeacherName');
+  if(topName) topName.textContent = t ? (t.name.split(' ')[0] || t.name) : 'Teacher';
+  var sideName = document.getElementById('sidebarTeacherName');
+  if(sideName) sideName.textContent = t ? t.name : 'Teacher 1';
+}
+
+function switchTeacher(teacherId){
+  saveState();
+  safeSetItem(ACTIVE_TEACHER_KEY, teacherId);
+  STORAGE_KEY = getStorageKey();
+  state = loadState();
+  syncWithNative(state);
+  updateTeacherBadges();
+  render();
+  var active = getActiveTeacher();
+  toast('Switched account to ' + active.name + '. Loaded their students and records.', 'success');
+}
+
+function addTeacherAccount(name, academy){
+  var list = getTeachersList();
+  var newId = 'teacher_' + Date.now();
+  var newKey = 'smh_data_v1_' + newId;
+  var newTeacher = {
+    id: newId,
+    name: name || ('Teacher ' + (list.length + 1)),
+    key: newKey,
+    academy: academy || 'Main Academy'
+  };
+  list.push(newTeacher);
+  safeSetItem(TEACHERS_KEY, JSON.stringify(list));
+  switchTeacher(newId);
+}
+
+function openTeacherSwitchModal(){
+  var list = getTeachersList();
+  var curId = getActiveTeacherId();
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">';
+  body += '<div style="font-size:13px;color:var(--muted);line-height:1.5">Each teacher has their own completely separate student list, classes, timetable, and attendance records. Switch between them instantly below.</div>';
+  body += '<div style="display:flex;flex-direction:column;gap:10px">';
+
+  list.forEach(function(t){
+    var isCur = (t.id === curId);
+    body += '<div class="card" style="margin:0;padding:12px 14px;border:1.5px solid ' + (isCur ? 'var(--primary)' : 'var(--border)') + ';background:' + (isCur ? 'var(--primary-soft)' : 'var(--surface)') + ';display:flex;align-items:center;gap:12px;cursor:pointer" data-action="do-switch-teacher" data-id="' + esc(t.id) + '">' +
+      '<div style="width:36px;height:36px;border-radius:10px;background:' + (isCur ? 'var(--primary)' : 'var(--surface-2)') + ';color:' + (isCur ? '#fff' : 'var(--text)') + ';display:grid;place-items:center;font-size:16px;font-weight:800">👨‍🏫</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:750;font-size:14px;color:var(--text)">' + esc(t.name) + (isCur ? ' <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:var(--success);color:#fff;font-weight:800;margin-left:6px">ACTIVE NOW</span>' : '') + '</div>' +
+        '<div class="xs muted" style="margin-top:2px">Primary Academy: ' + esc(t.academy || 'Default Academy') + '</div>' +
+      '</div>' +
+      (!isCur ? '<button type="button" class="btn sm primary" data-action="do-switch-teacher" data-id="' + esc(t.id) + '">Switch</button>' : '') +
+    '</div>';
+  });
+
+  body += '</div>';
+
+  body += '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">' +
+    '<div style="font-weight:750;font-size:13.5px;margin-bottom:8px">➕ Add New Teacher Account</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<input type="text" id="newTeacherName" placeholder="e.g. Ustadh Tariq / Teacher 3" style="flex:1;min-width:160px;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--surface);padding:0 10px;font-size:13px;font-weight:600">' +
+      '<input type="text" id="newTeacherAcademy" placeholder="Academy Name" value="' + esc(getAcademies()[0] || '') + '" style="flex:1;min-width:140px;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--surface);padding:0 10px;font-size:13px;font-weight:600">' +
+      '<button type="button" class="btn primary" id="btnCreateTeacher" style="height:38px">Create &amp; Switch</button>' +
+    '</div>' +
+  '</div>';
+
+  body += '</div>';
+
+  openModal({
+    title: 'Switch Teacher Account',
+    size: 'md',
+    body: body,
+    footer: '<button type="button" class="btn" data-action="close-modal">Done</button>'
+  });
+
+  var btnAdd = document.getElementById('btnCreateTeacher');
+  if(btnAdd){
+    btnAdd.addEventListener('click', function(){
+      var nameEl = document.getElementById('newTeacherName');
+      var acadEl = document.getElementById('newTeacherAcademy');
+      var nVal = nameEl ? nameEl.value.trim() : '';
+      var aVal = acadEl ? acadEl.value.trim() : '';
+      if(!nVal){
+        toast('Please enter a Teacher Name.', 'warn');
+        return;
+      }
+      closeModal();
+      addTeacherAccount(nVal, aVal);
+    });
+  }
+}
 
 var DEFAULT_GRADES = [
   {min:90, grade:'A+'},
@@ -1622,7 +1761,7 @@ function parseStateData(parsed){
 
 function loadState(){
   try{
-    var raw = safeGetItem(STORAGE_KEY);
+    var raw = safeGetItem(getStorageKey());
     if(!raw) raw = safeGetItem('smh_permanent_backup');
     if(!raw) return defaultState();
     var parsed = JSON.parse(raw);
@@ -1722,7 +1861,7 @@ window.handleUpdateEvent = function(evt){
 
 var saveState = debounce(function(){
   var jsonStr = JSON.stringify(state);
-  var ok = safeSetItem(STORAGE_KEY, jsonStr);
+  var ok = safeSetItem(getStorageKey(), jsonStr);
   safeSetItem('smh_permanent_backup', jsonStr);
   syncWithNative(state);
   if(ok){ storageOK = true; }
@@ -1734,7 +1873,7 @@ var saveState = debounce(function(){
 
 function saveNow(){
   var jsonStr = JSON.stringify(state);
-  var ok = safeSetItem(STORAGE_KEY, jsonStr);
+  var ok = safeSetItem(getStorageKey(), jsonStr);
   safeSetItem('smh_permanent_backup', jsonStr);
   syncWithNative(state);
   if(ok){ storageOK = true; }
@@ -2340,12 +2479,40 @@ function viewDashboard(el){
     return String(b.date||'').localeCompare(String(a.date||'')) || String(b.id).localeCompare(String(a.id));
   }).slice(0, 6);
 
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var nowMo = new Date().getMonth() + 1;
   var nowYr = new Date().getFullYear();
-  var monthName = ['January','February','March','April','May','June','July','August','September','October','November','December'][nowMo - 1];
+  var monthName = monthNames[nowMo - 1];
   var monthPrefix = nowYr + '-' + pad2(nowMo);
   var monthAtt = state.attendance.filter(function(a){ return String(a.date||'').slice(0, 7) === monthPrefix; });
   var monthStats = attendanceStats(monthAtt);
+
+  // Live Fallback: If current month has no attendance recorded yet, display most recent active month or overall
+  var displayRateLabel = monthName + ' Attendance Rate';
+  var displayRateValue = monthStats.total ? (monthStats.pct + '%') : (st.pct + '%');
+  var displayRateSub = monthStats.total ? (monthStats.attended + ' of ' + monthStats.total + ' attended') : 'Pending today';
+  if(!monthStats.total && state.attendance.length){
+    var sortedDates = state.attendance.map(function(a){ return a.date; }).filter(Boolean).sort();
+    if(sortedDates.length){
+      var latestDate = sortedDates[sortedDates.length - 1];
+      var latestPrefix = latestDate.slice(0, 7);
+      var latestMo = parseInt(latestPrefix.slice(5, 7), 10);
+      var latestYr = latestPrefix.slice(0, 4);
+      var latestAtt = state.attendance.filter(function(a){ return String(a.date||'').slice(0, 7) === latestPrefix; });
+      var latestStats = attendanceStats(latestAtt);
+      if(latestStats.total){
+        displayRateLabel = monthNames[latestMo - 1] + ' (' + latestYr + ') Rate';
+        displayRateValue = latestStats.pct + '%';
+        displayRateSub = latestStats.attended + ' of ' + latestStats.total + ' attended (Latest active month)';
+      }
+    }
+  }
+
+  // Today present/absent display
+  var presentCardVal = todaysAtt.length ? String(st.present) : 'Pending';
+  var presentCardSub = todaysAtt.length ? (st.late + ' late · ' + st.excused + ' excused') : 'Today not marked yet · Tap to mark';
+  var absentCardVal = todaysAtt.length ? String(st.absent) : '0';
+  var absentCardSub = todaysAtt.length ? (unmarked + ' unmarked') : (totalStudents + ' students waiting');
 
   var html = '';
   html += '<div class="page-head"><div><h1>Welcome, Teacher</h1><p>Here is what is happening across your academies today.</p></div>' +
@@ -2356,9 +2523,9 @@ function viewDashboard(el){
 
   html += '<div class="grid g-4">' +
     statCard('users', String(totalStudents), 'Total Students', uniqueClasses().length + ' class group(s)', 'tone-info') +
-    statCard('check', String(st.present), 'Present Today', st.late + ' late · ' + (st.sick ? st.sick + ' sick · ' : '') + st.excused + ' excused', 'tone-success') +
-    statCard('alert', String(st.absent), 'Absent Today', unmarked + ' not marked yet', 'tone-danger') +
-    statCard('trendUp', monthStats.total ? monthStats.pct + '%' : (st.pct + '%'), monthName + ' Attendance Rate', monthStats.total ? monthStats.attended + ' of ' + monthStats.total + ' attended' : 'Overall', 'tone-info') +
+    statCard('check', presentCardVal, 'Present Today', presentCardSub, 'tone-success') +
+    statCard('alert', absentCardVal, 'Absent Today', absentCardSub, 'tone-danger') +
+    statCard('trendUp', displayRateValue, displayRateLabel, displayRateSub, 'tone-info') +
     '</div>';
 
   html += '<div class="grid g-4" style="margin-top:16px">' +
@@ -2984,7 +3151,15 @@ function attendanceRegisterHTML(){
 
   // Pre-index month attendance records: map by studentId + '_' + dateStr
   var monthPrefix = yr + '-' + pad2(mo);
-  var monthRecords = state.attendance.filter(function(a){ return String(a.date||'').slice(0, 7) === monthPrefix; });
+  var targetSubj = ui.attRegSubject || '';
+  var monthRecords = state.attendance.filter(function(a){
+    if(String(a.date||'').slice(0, 7) !== monthPrefix) return false;
+    var aSubj = a.subjectId || '';
+    if(targetSubj){
+      return aSubj === targetSubj;
+    }
+    return !aSubj || aSubj === '';
+  });
   var attMap = {};
   monthRecords.forEach(function(a){ attMap[a.studentId + '_' + a.date] = a; });
 
@@ -3068,6 +3243,12 @@ function attendanceRegisterHTML(){
       '<input type="search" id="attRegSearch" placeholder="Search student by name/roll…" value="' + esc(ui.attRegSearch) + '" aria-label="Search student"></div>' +
     '<select id="attRegClass" aria-label="Filter by class" style="height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 10px;font-weight:600;font-size:12px">' +
       selectOptions(uniqueClasses(), ui.attRegClass, 'All Classes') + '</select>' +
+    '<select id="attRegSubject" aria-label="Filter by subject" style="height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 10px;font-weight:600;font-size:12px">' +
+      '<option value="">All Subjects (Full Day)</option>' +
+      getSubjectsForClass(ui.attRegClass).map(function(sb){
+        return '<option value="' + esc(sb.id) + '"' + (ui.attRegSubject === sb.id ? ' selected' : '') + '>📖 ' + esc(sb.name) + '</option>';
+      }).join('') +
+    '</select>' +
     '<select id="attRegAcademy" aria-label="Filter by academy" style="height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 10px;font-weight:600;font-size:12px">' +
       selectOptions(getAcademies(), ui.attRegAcademy, 'All Academies') + '</select>' +
     '<button type="button" class="btn sm" data-action="export-att-image" style="height:34px;padding:0 11px;font-size:12px" title="Generate full-month attendance image">' + icon('camera') + 'Screenshot Full Sheet</button>' +
@@ -3388,6 +3569,13 @@ function bindAttPanel(){
       renderAttPanel();
     });
   }
+  var regSubj = document.getElementById('attRegSubject');
+  if(regSubj) {
+    regSubj.addEventListener('change', function(){
+      ui.attRegSubject = regSubj.value;
+      renderAttPanel(true);
+    });
+  }
   var regAcad = document.getElementById('attRegAcademy');
   if(regAcad) {
     regAcad.addEventListener('change', function(){
@@ -3420,10 +3608,16 @@ function bindAttPanel(){
   if(calStudent) calStudent.addEventListener('change', function(){ ui.attRecStudent = calStudent.value; renderAttPanel(); });
 }
 
-function setAttendance(studentId, date, status, note){
+function setAttendance(studentId, date, status, note, subjectId){
+  var targetSubj = (subjectId !== undefined) ? (subjectId || '') : (ui.attRegSubject || '');
   var idx = -1;
-  for(var i=0;i<state.attendance.length;i++){
-    if(state.attendance[i].studentId === studentId && state.attendance[i].date === date){ idx = i; break; }
+  for(var i=0; i<state.attendance.length; i++){
+    var a = state.attendance[i];
+    var aSubj = a.subjectId || '';
+    if(a.studentId === studentId && a.date === date && aSubj === targetSubj){
+      idx = i;
+      break;
+    }
   }
   if(!status || status === 'clear' || status === 'unmarked'){
     if(idx >= 0){
@@ -3435,8 +3629,16 @@ function setAttendance(studentId, date, status, note){
   if(idx >= 0){
     state.attendance[idx].status = status;
     if(note !== undefined) state.attendance[idx].note = note;
+    state.attendance[idx].subjectId = targetSubj;
   }else{
-    state.attendance.push({id: uid('att'), studentId: studentId, date: date, status: status, note: note || ''});
+    state.attendance.push({
+      id: uid('att'),
+      studentId: studentId,
+      date: date,
+      status: status,
+      subjectId: targetSubj,
+      note: note || ''
+    });
   }
   saveState();
 }
@@ -5839,12 +6041,27 @@ function playTone(){
   }catch(e){ /* sound is optional */ }
 }
 
+function sendNativeNotification(title, body, url){
+  try {
+    if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'NOTIFICATION',
+        title: title,
+        body: body,
+        url: url || ''
+      }));
+    }
+  } catch(e){}
+}
+
 function showClassNotification(cls, dateStr, minutesLeft){
   var subj = subjectById(cls.subjectId);
   var title = cls.title || (subj && subj.name) || 'Class';
-  var msg = title + ' starts in ' + minutesLeft + ' minute' + (minutesLeft === 1 ? '' : 's') + '. ' +
-    (cls.room ? 'Room ' + cls.room + '. ' : '') +
-    (cls.url ? 'Open the meeting link to join.' : '');
+  var msg = (minutesLeft === 0)
+    ? (title + ' is happening now! Click "Open Meeting" to join.')
+    : (title + ' starts in ' + minutesLeft + ' minute' + (minutesLeft === 1 ? '' : 's') + '. ' +
+      (cls.room ? 'Room ' + cls.room + '. ' : '') +
+      (cls.url ? 'Open meeting link to join.' : ''));
 
   var actions = [];
   if(isValidUrl(cls.url)){
@@ -5855,13 +6072,12 @@ function showClassNotification(cls, dateStr, minutesLeft){
   actions.push({label:'View Schedule', run: function(){ navigate('schedule'); }});
 
   toast(msg, 'info', 12000, actions);
+  sendNativeNotification('Nova Student Manager — ' + title, msg, cls.url);
 
   if(state.settings.notifications && 'Notification' in window && Notification.permission === 'granted'){
     try{
-      var n = new Notification('Student Manager Hub — ' + title, {
-        body: 'Starts in ' + minutesLeft + ' minute' + (minutesLeft === 1 ? '' : 's') + '. ' +
-              (cls.room ? 'Room ' + cls.room + '. ' : '') +
-              (cls.url ? 'Click "Open Meeting" in the app to join.' : ''),
+      var n = new Notification('Nova Student Manager — ' + title, {
+        body: msg,
         tag: 'smh-' + cls.id + '-' + dateStr
       });
       n.onclick = function(){
@@ -5869,7 +6085,7 @@ function showClassNotification(cls, dateStr, minutesLeft){
         if(isValidUrl(cls.url)) window.open(cls.url, '_blank', 'noopener,noreferrer');
         n.close();
       };
-    }catch(e){ /* some browsers block constructor notifications */ }
+    }catch(e){}
   }
   playTone();
 }
@@ -5889,10 +6105,11 @@ function checkReminders(){
     var diffMin = (start - now) / 60000;
     var reminder = (c.reminder !== undefined && c.reminder !== null && c.reminder !== '')
       ? Number(c.reminder) : Number(state.settings.defaultReminder);
-    if(diffMin > 0 && diffMin <= reminder){
+    if(diffMin > -15 && diffMin <= reminder){
       notifiedKeys[key] = true;
       persistNotified();
-      showClassNotification(c, today, Math.max(1, Math.round(diffMin)));
+      var minVal = diffMin > 0 ? Math.max(1, Math.round(diffMin)) : 0;
+      showClassNotification(c, today, minVal);
     }
   });
 
@@ -5906,11 +6123,11 @@ function checkReminders(){
 }
 
 function testNotification(){
-  toast('Test reminder: "Test Class starts in ' + state.settings.defaultReminder + ' minutes."', 'info', 8000);
-  if(state.settings.notifications && 'Notification' in window && Notification.permission === 'granted'){
-    try{ new Notification('Student Manager Hub — Test', {body:'Notifications are working correctly.'}); }catch(e){}
-  }else if('Notification' in window && Notification.permission !== 'granted'){
-    toast('Browser notifications are not granted yet — showing in-app toast instead.', 'warn');
+  var msg = 'Class Reminder: "Arabic Grammar Batch" starts in ' + (state.settings.defaultReminder || 5) + ' minutes. Meeting link ready.';
+  toast('🔔 ' + msg, 'info', 9000, [{label: 'Open Meeting', run: function(){ window.open('https://meet.google.com', '_blank'); }}]);
+  sendNativeNotification('Nova Student Manager — Test Reminder', msg, 'https://meet.google.com');
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{ new Notification('Nova Student Manager — Test Reminder', {body: msg}); }catch(e){}
   }
   playTone();
 }
@@ -6738,8 +6955,9 @@ function openAttendanceImageModal(opts){
 
   var footer = '' +
     '<button type="button" class="btn" data-action="close-modal">Close</button>' +
-    '<button type="button" class="btn" id="btnCopyAttImg">' + icon('copy') + 'Copy Image</button>' +
-    '<button type="button" class="btn primary" id="btnDownloadAttImg">' + icon('download') + 'Download Full PNG Image</button>';
+    '<button type="button" class="btn" id="btnShareWhatsApp" style="background:#25D366;color:#ffffff;border-color:#25D366;font-weight:700" title="Directly share this attendance image on WhatsApp">' + icon('share') + 'Share to WhatsApp</button>' +
+    '<button type="button" class="btn primary" id="btnCopyAttImg" style="font-weight:700" title="Copy full image directly to clipboard to paste anywhere">' + icon('copy') + 'Copy Image to Clipboard</button>' +
+    '<button type="button" class="btn" id="btnDownloadAttImg">' + icon('download') + 'Download PNG</button>';
 
   openModal({
     title: 'Export Full Attendance Register Image',
@@ -6818,28 +7036,89 @@ function openAttendanceImageModal(opts){
     });
   }
 
+  // Direct WhatsApp Share Handler
+  var btnWa = document.getElementById('btnShareWhatsApp');
+  if(btnWa){
+    btnWa.addEventListener('click', function(){
+      if(!currentCanvas) return;
+      var aVal = (document.getElementById('attImgAcad').value || 'Academy').replace(/[^a-zA-Z0-9_-]/g, '_');
+      var cVal = (document.getElementById('attImgClass').value || 'AllClasses').replace(/[^a-zA-Z0-9_-]/g, '_');
+      var mVal = document.getElementById('attImgMonth').value;
+      var yVal = document.getElementById('attImgYear').value;
+      var fname = 'Attendance_' + aVal + '_' + cVal + '_Month_' + mVal + '_' + yVal + '.png';
+      var captionText = 'Attendance Register — ' + aVal + ' (' + cVal + ')';
+
+      // 1. In React Native mobile app: use native share sheet directly targeted for WhatsApp
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'SHARE_FILE',
+          filename: fname,
+          data: currentDataUrl,
+          caption: captionText
+        }));
+        toast('Opening WhatsApp / Native Share sheet…', 'info', 3500);
+        return;
+      }
+
+      // 2. In modern browser supporting Web Share with files
+      if(navigator.canShare && currentCanvas.toBlob){
+        currentCanvas.toBlob(function(blob){
+          if(!blob) return;
+          try {
+            var file = new File([blob], fname, { type: 'image/png' });
+            if(navigator.canShare({ files: [file] })){
+              navigator.share({
+                files: [file],
+                title: fname,
+                text: captionText
+              }).then(function(){
+                toast('Shared successfully!', 'success');
+              }).catch(function(){});
+              return;
+            }
+          } catch(e){}
+          copyCanvasToClipboard(currentCanvas, true);
+        }, 'image/png');
+        return;
+      }
+
+      // 3. Fallback
+      copyCanvasToClipboard(currentCanvas, true);
+    });
+  }
+
+  function copyCanvasToClipboard(cv, isForWhatsApp){
+    if(!cv) return;
+    if(navigator.clipboard && window.ClipboardItem && cv.toBlob){
+      cv.toBlob(function(blob){
+        if(!blob) return;
+        try {
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function(){
+            if(isForWhatsApp){
+              toast('✓ Image copied to clipboard! Open WhatsApp and tap Paste.', 'success', 6000);
+            } else {
+              toast('✓ Image copied to clipboard! You can paste it directly.', 'success', 4500);
+            }
+          }).catch(function(err){
+            console.warn('Clipboard write error:', err);
+            document.getElementById('btnDownloadAttImg')?.click();
+            toast('Direct clipboard image restricted by browser. Initiated instant PNG download.', 'info', 4500);
+          });
+        } catch(e) {
+          document.getElementById('btnDownloadAttImg')?.click();
+        }
+      }, 'image/png');
+    } else {
+      document.getElementById('btnDownloadAttImg')?.click();
+      toast('Image downloaded! You can now send it on WhatsApp.', 'success');
+    }
+  }
+
   // Copy to Clipboard Handler
   var btnCp = document.getElementById('btnCopyAttImg');
   if(btnCp){
     btnCp.addEventListener('click', function(){
-      if(!currentCanvas) return;
-      if(navigator.clipboard && window.ClipboardItem && currentCanvas.toBlob){
-        currentCanvas.toBlob(function(blob){
-          if(!blob) return;
-          try {
-            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function(){
-              toast('Image copied to clipboard! You can paste it directly in WhatsApp.', 'success');
-            }).catch(function(err){
-              console.warn('Clipboard write error:', err);
-              toast('Clipboard write not allowed. Please use Download.', 'warn');
-            });
-          } catch(e) {
-            toast('Clipboard API not supported. Please use Download.', 'warn');
-          }
-        }, 'image/png');
-      } else {
-        toast('Clipboard copy is not supported in this browser. Please click Download.', 'warn');
-      }
+      copyCanvasToClipboard(currentCanvas, false);
     });
   }
 }
@@ -7046,6 +7325,15 @@ document.addEventListener('click', function(e){
   switch(action){
     /* Navigation */
     case 'nav': navigate(el.getAttribute('data-view')); break;
+    case 'open-teacher-switcher': openTeacherSwitchModal(); break;
+    case 'do-switch-teacher': {
+      var tid = el.getAttribute('data-id');
+      if(tid){
+        closeModal();
+        switchTeacher(tid);
+      }
+      break;
+    }
     case 'toggle-sidebar': toggleSidebar(); break;
     case 'close-sidebar': closeSidebar(); break;
     case 'close-modal': closeModal(); break;
@@ -7703,6 +7991,7 @@ function init(){
     if(!ui.attRecMonth) ui.attRecMonth = new Date().getMonth() + 1;
     if(!ui.attRecYear) ui.attRecYear = new Date().getFullYear();
     render();
+    try{ updateTeacherBadges(); }catch(e){}
   }catch(err){
     console.error('Initialization error:', err);
     showFatal(err);

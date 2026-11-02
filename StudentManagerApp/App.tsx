@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Platform, NativeModules, StatusBar as RNStatusBar } from 'react-native';
+import { View, StyleSheet, Platform, NativeModules, StatusBar as RNStatusBar, Alert, Vibration, Share, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -437,6 +437,48 @@ export default function App() {
           break;
         }
 
+        case 'NOTIFICATION': {
+          try {
+            Vibration.vibrate([0, 250, 150, 250]);
+            const notifTitle = msg.title || 'Class Reminder';
+            const notifBody = msg.body || 'You have an upcoming class scheduled.';
+            const buttons: any[] = [{ text: 'OK', style: 'default' }];
+            if (msg.url) {
+              buttons.unshift({
+                text: 'Open Meeting',
+                onPress: () => {
+                  try { Linking.openURL(msg.url); } catch(e) {}
+                }
+              });
+            }
+            Alert.alert(`🔔 ${notifTitle}`, notifBody, buttons);
+          } catch(e) {
+            console.warn('Native notification alert error:', e);
+          }
+          break;
+        }
+
+        case 'SHARE_FILE':
+        case 'SHARE_IMAGE': {
+          try {
+            const shareTitle = msg.title || msg.filename || 'Attendance Register';
+            const shareMsg = msg.caption || 'Attendance Register — Nova Student Manager';
+            const rawData = msg.data || '';
+            await Share.share({
+              title: shareTitle,
+              message: shareMsg,
+              url: rawData
+            });
+            webViewRef.current?.injectJavaScript(`
+              if(window.toast){ toast("Share sheet opened! Select WhatsApp to send directly.", "success", 4000); }
+              true;
+            `);
+          } catch(e) {
+            console.warn('Native share error:', e);
+          }
+          break;
+        }
+
         case 'DOWNLOAD_FILE': {
           if (!msg.data) break;
           try {
@@ -451,7 +493,12 @@ export default function App() {
                 true;
               `);
             } else {
-              console.warn('FileSaver native module not available');
+              // Open native share sheet so teacher can save or send directly via WhatsApp
+              await Share.share({
+                title: filename,
+                message: `Export: ${filename}`,
+                url: rawData
+              });
             }
           } catch (downloadErr) {
             console.warn('Native download handler error:', downloadErr);

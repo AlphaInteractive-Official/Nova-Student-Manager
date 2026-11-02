@@ -1,22 +1,22 @@
 {
   "name": "Nova Student Manager",
-  "version": "1.1.05",
-  "buildCode": 6,
+  "version": "1.2.01",
+  "buildCode": 7,
   "releaseDate": "2026-11-02",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "f69421d29501823df7eaa1fac7a2cb835023a37e9d6261bddebf7717ab8b92f1",
-  "entrySize": 376507,
+  "entrySha256": "09e65c66a475709e0b34a7be88f659218d9ca10ef91293dd1b839cd406243d9d",
+  "entrySize": 389892,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "f69421d29501823df7eaa1fac7a2cb835023a37e9d6261bddebf7717ab8b92f1",
-      "size": 376507
+      "sha256": "09e65c66a475709e0b34a7be88f659218d9ca10ef91293dd1b839cd406243d9d",
+      "size": 389892
     }
   ],
-  "releaseNotes": "Official Nova Student Manager branding, adaptive launcher icons, notch and bezel safe-area protection, and responsive layout polish for phone, tablet, and laptop.",
+  "releaseNotes": "Multi-Teacher account switching with isolated datasets, Subject+Class attendance register, direct WhatsApp image sharing & clipboard copy, live dashboard stats fallback, and native vibration/alert notification bridge.",
   "compatibility": {
     "targetPackage": "com.alphainteractive.studentmanager",
     "supportedStorageSchema": "v1",
