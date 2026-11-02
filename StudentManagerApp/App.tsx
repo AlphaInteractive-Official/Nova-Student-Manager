@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Platform, NativeModules } from 'react-native';
+import { View, StyleSheet, Platform, NativeModules, StatusBar as RNStatusBar } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -517,7 +517,7 @@ export default function App() {
   if (WebViewComponent && isEngineReady) {
     return (
       <View style={styles.nativeContainer}>
-        <StatusBar style="auto" />
+        <StatusBar style="light" backgroundColor="#090D16" />
         <WebViewComponent
           ref={webViewRef}
           key={activeHtmlBase64.slice(0, 32)} // Re-mount when base64 changes on update activation
@@ -568,7 +568,8 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#0a0d14',
+    backgroundColor: '#090D16',
+    paddingTop: Platform.OS === 'android' ? Math.max(RNStatusBar.currentHeight || 0, 42) : (Platform.OS === 'ios' ? 44 : 0),
   },
   webView: {
     flex: 1,

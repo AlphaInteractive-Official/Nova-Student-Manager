@@ -1,22 +1,22 @@
 {
   "name": "Nova Student Manager",
-  "version": "1.1.04",
-  "buildCode": 5,
+  "version": "1.1.05",
+  "buildCode": 6,
   "releaseDate": "2026-11-02",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
-  "entrySize": 376031,
+  "entrySha256": "f69421d29501823df7eaa1fac7a2cb835023a37e9d6261bddebf7717ab8b92f1",
+  "entrySize": 376507,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
-      "size": 376031
+      "sha256": "f69421d29501823df7eaa1fac7a2cb835023a37e9d6261bddebf7717ab8b92f1",
+      "size": 376507
     }
   ],
-  "releaseNotes": "Online application updates, zero-data-loss protection architecture, pre-migration snapshot safety, and bilingual rendering optimizations.",
+  "releaseNotes": "Official Nova Student Manager branding, adaptive launcher icons, notch and bezel safe-area protection, and responsive layout polish for phone, tablet, and laptop.",
   "compatibility": {
     "targetPackage": "com.alphainteractive.studentmanager",
     "supportedStorageSchema": "v1",
