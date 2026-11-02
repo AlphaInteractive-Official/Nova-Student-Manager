@@ -1276,6 +1276,7 @@ var ICONS = {
   schedule:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   calculator:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   reports:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  scan:'<path d="M23 7V4a1 1 0 0 0-1-1h-3"/><path d="M16 3h-3a1 1 0 0 0-1 1v3"/><path d="M1 7V4a1 1 0 0 1 1-1h3"/><path d="M8 3h3a1 1 0 0 1 1 1v3"/><path d="M23 17v3a1 1 0 0 1-1 1h-3"/><path d="M16 21h-3a1 1 0 0 1-1-1v-3"/><path d="M1 17v3a1 1 0 0 0 1 1h3"/><path d="M8 21h3a1 1 0 0 0 1-1v-3"/><rect x="7" y="7" width="10" height="10" rx="1"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09A1.65 1.65 0 0 0 20.91 10H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
@@ -2388,6 +2389,7 @@ var NAV_ITEMS = [
   {id:'schedule',   label:'Schedule',   icon:'schedule'},
   {id:'calculator', label:'Percentage', icon:'calculator'},
   {id:'reports',    label:'Reports',    icon:'reports'},
+  {id:'scanner',    label:'Meet Scan',  icon:'scan'},
   {id:'settings',   label:'Settings',   icon:'settings'}
 ];
 
@@ -8129,6 +8131,7 @@ var VIEWS = {
   schedule: viewSchedule,
   calculator: viewCalculator,
   reports: viewReports,
+  scanner: viewScanner,
   settings: viewSettings
 };
 
@@ -8235,6 +8238,521 @@ if(document.readyState === 'loading'){
 }else{
   try{ init(); }catch(err){ showFatal(err); }
 }
+
+/* ==========================================================================
+   SMART MEET SCANNER — viewScanner + bindScannerPanel
+   ========================================================================== */
+
+/* ---- Levenshtein fuzzy match ---- */
+function levenshtein(a, b){
+  var m = a.length, n = b.length;
+  var dp = [];
+  for(var i = 0; i <= m; i++){ dp[i] = [i]; }
+  for(var j = 0; j <= n; j++){ dp[0][j] = j; }
+  for(var ii = 1; ii <= m; ii++){
+    for(var jj = 1; jj <= n; jj++){
+      if(a[ii-1] === b[jj-1]) dp[ii][jj] = dp[ii-1][jj-1];
+      else dp[ii][jj] = 1 + Math.min(dp[ii-1][jj], dp[ii][jj-1], dp[ii-1][jj-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function similarityScore(a, b){
+  a = a.toLowerCase().trim();
+  b = b.toLowerCase().trim();
+  if(a === b) return 1;
+  var maxLen = Math.max(a.length, b.length);
+  if(maxLen === 0) return 1;
+  var lev = levenshtein(a, b);
+  var levScore = 1 - lev / maxLen;
+
+  // token overlap bonus
+  var ta = a.split(/\s+/);
+  var tb = b.split(/\s+/);
+  var common = 0;
+  for(var i = 0; i < ta.length; i++){
+    for(var j = 0; j < tb.length; j++){
+      if(ta[i].length > 1 && tb[j].length > 1 && ta[i] === tb[j]) common++;
+    }
+  }
+  var tokenScore = common / Math.max(ta.length, tb.length);
+  return Math.max(levScore, tokenScore);
+}
+
+/* Normalize a raw name from Meet: strip noise, lowercase */
+function cleanMeetName(raw){
+  return raw
+    .replace(/\(you\)/gi,'').replace(/\(host\)/gi,'').replace(/\(presentation\)/gi,'')
+    .replace(/\(co-host\)/gi,'').replace(/\(muted\)/gi,'').replace(/[\u200b-\u200d\ufeff]/g,'')
+    .replace(/[📌📷🎙🎤🔇🔕✋👋]/g,'')
+    .replace(/[-_\.]+/g,' ')
+    .replace(/\b\d{2,}\b/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+/* Match a list of raw Meet names against students in a class */
+function matchNamesToStudents(rawNames, students){
+  var THRESHOLD = 0.55;
+  var results = {
+    matched: [],    // {student, rawName, score, status:'P'}
+    unmatched: []   // raw names with no good match
+  };
+  var usedIds = {};
+
+  rawNames.forEach(function(raw){
+    var clean = cleanMeetName(raw);
+    if(!clean) return;
+    var best = null, bestScore = 0;
+    students.forEach(function(s){
+      if(usedIds[s.id]) return;
+      var score = similarityScore(clean, s.name || '');
+      if(score > bestScore){ bestScore = score; best = s; }
+    });
+    if(best && bestScore >= THRESHOLD){
+      usedIds[best.id] = true;
+      results.matched.push({student: best, rawName: raw, score: bestScore, status:'P'});
+    } else {
+      results.unmatched.push(raw);
+    }
+  });
+
+  // Students not in matched list → absent
+  students.forEach(function(s){
+    if(!usedIds[s.id]) results.matched.push({student: s, rawName: null, score: 0, status:'A'});
+  });
+
+  return results;
+}
+
+/* ---- Scan state ---- */
+var scanState = {
+  images: [],         // [{dataUrl, file}]
+  classId: '',
+  date: todayStr(),
+  processing: false,
+  rawNames: [],
+  matchResult: null,
+  stagingRows: []     // [{studentId, studentName, rawName, status}]
+};
+
+/* ---- View entry ---- */
+function viewScanner(el){
+  var classes = getConfiguredClasses();
+  var classOptions = classes.map(function(c){
+    return '<option value="'+esc(c)+'">'+esc(c)+'</option>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="page-head" style="margin-bottom:14px"><div>' +
+      '<h1 style="display:flex;align-items:center;gap:10px;font-size:22px">' +
+        icon('scan') + 'Smart Meet Scanner' +
+        '<span style="font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;'+
+          'background:var(--primary-soft);color:var(--primary)">AI Powered</span>' +
+      '</h1>' +
+      '<p style="color:var(--muted);font-size:13.5px;margin-top:4px">' +
+        'Upload Google Meet / Zoom participant screenshots. Nova automatically detects present students and fills attendance.' +
+      '</p>' +
+    '</div></div>' +
+    '<div id="scanner-panel">' + renderScannerUploadPanel(classOptions) + '</div>';
+
+  bindScannerPanel();
+}
+
+function renderScannerUploadPanel(classOptionsOverride){
+  var classes = getConfiguredClasses();
+  var classOptions = classOptionsOverride || classes.map(function(c){
+    return '<option value="'+esc(c)+'">'+esc(c)+'</option>';
+  }).join('');
+
+  return (
+    '<div class="card" style="max-width:720px;margin:0 auto">' +
+
+    /* Step 1: Class + Date */
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">' +
+      '<div class="field">' +
+        '<label style="font-weight:600;font-size:13px">Class</label>' +
+        '<select id="scan-class" style="width:100%">' +
+          '<option value="">-- Select Class --</option>' +
+          classOptions +
+        '</select>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label style="font-weight:600;font-size:13px">Date</label>' +
+        '<input type="date" id="scan-date" value="'+esc(scanState.date)+'" style="width:100%">' +
+      '</div>' +
+    '</div>' +
+
+    /* Step 2: Upload zone */
+    '<div id="scan-dropzone" style="'+
+      'border:2px dashed var(--border);border-radius:var(--radius);padding:36px 24px;'+
+      'text-align:center;cursor:pointer;transition:border-color .2s,background .2s;'+
+      'background:var(--surface-2)">' +
+      '<div style="font-size:36px;margin-bottom:8px">📸</div>' +
+      '<div style="font-weight:700;font-size:15px;margin-bottom:4px">Drop screenshots here</div>' +
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:14px">'+
+        'Google Meet · Zoom · Any screenshot with participant names (up to 4 images)' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="scan-pick-btn">'+
+        icon('scan') + 'Choose Screenshots' +
+      '</button>' +
+      '<input type="file" id="scan-file-input" accept="image/*" multiple style="display:none">' +
+    '</div>' +
+
+    /* Image previews */
+    '<div id="scan-previews" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>' +
+
+    /* Scan button */
+    '<div style="margin-top:18px;display:flex;gap:10px;align-items:center">' +
+      '<button type="button" class="btn primary" id="scan-run-btn" style="min-width:180px" disabled>' +
+        icon('scan') + 'Scan &amp; Detect Names' +
+      '</button>' +
+      '<span id="scan-status" style="font-size:13px;color:var(--muted)"></span>' +
+    '</div>' +
+    '</div>' /* close .card */
+  );
+}
+
+function renderStagingPanel(){
+  var rows = scanState.stagingRows;
+  var cls = scanState.classId;
+  var dt = scanState.date;
+
+  var matched = rows.filter(function(r){ return r.rawName; });
+  var absent = rows.filter(function(r){ return !r.rawName; });
+  var unmatchedNames = scanState.matchResult ? scanState.matchResult.unmatched : [];
+
+  var rowsHtml = rows.map(function(r, idx){
+    var statusBtns = ['P','A','L','S','H'].map(function(s){
+      var labels = {P:'Present',A:'Absent',L:'Late',S:'Sick',H:'Holiday'};
+      var colors = {P:'var(--success)',A:'var(--danger)',L:'var(--warn)',S:'var(--info)',H:'var(--muted)'};
+      var active = r.status === s;
+      return '<button type="button" data-action="scan-status" data-idx="'+idx+'" data-status="'+s+'" '+
+        'style="padding:4px 10px;border-radius:6px;border:1.5px solid '+(active?colors[s]:'var(--border)')+';'+
+        'background:'+(active?colors[s]:'transparent')+';color:'+(active?'#fff':colors[s])+';'+
+        'font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s">'+s+'</button>';
+    }).join('');
+
+    var matchBadge = r.rawName
+      ? '<span style="font-size:11px;color:var(--success);background:var(--success-soft);'+
+          'padding:2px 7px;border-radius:10px;margin-left:8px">'+
+          esc(r.rawName.length > 22 ? r.rawName.substring(0,20)+'…' : r.rawName) +
+        '</span>'
+      : '<span style="font-size:11px;color:var(--muted);background:var(--surface-2);'+
+          'padding:2px 7px;border-radius:10px;margin-left:8px">not in screenshot</span>';
+
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="flex:1;font-weight:600;font-size:13.5px">'+esc(r.studentName)+matchBadge+'</div>' +
+      '<div style="display:flex;gap:5px">'+rowsHtml+'</div>' +
+    '</div>';
+  }).join('');
+
+  var unmatchedHtml = unmatchedNames.length
+    ? '<div style="margin-top:18px;padding:14px;background:var(--warn-soft);border-radius:var(--radius-sm)">' +
+        '<div style="font-weight:700;font-size:13px;margin-bottom:8px">'+
+          '⚠️ '+unmatchedNames.length+' name(s) detected but not matched to any registered student:' +
+        '</div>' +
+        unmatchedNames.map(function(n){
+          return '<span style="display:inline-block;padding:3px 10px;background:var(--surface);border:1px solid var(--border);'+
+            'border-radius:8px;font-size:12.5px;margin:3px">'+esc(n)+'</span>';
+        }).join('') +
+        '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">'+
+          'These may be teachers, external participants, or unregistered students. Ignored for attendance.' +
+        '</div>' +
+      '</div>'
+    : '';
+
+  return (
+    '<div class="card" style="max-width:720px;margin:0 auto">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">' +
+      '<div>' +
+        '<h2 style="font-size:17px;font-weight:700;margin:0">Review &amp; Confirm Attendance</h2>' +
+        '<p style="color:var(--muted);font-size:13px;margin-top:3px">'+
+          'Class: <strong>'+esc(cls)+'</strong> &nbsp;|&nbsp; Date: <strong>'+esc(dt)+'</strong>' +
+        '</p>' +
+      '</div>' +
+      '<button type="button" class="btn ghost" id="scan-reset-btn">'+icon('close')+' Reset</button>' +
+    '</div>' +
+
+    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
+      ['P','A','L','S','H'].map(function(s){
+        var labels = {P:'Present',A:'Absent',L:'Late',S:'Sick',H:'Holiday'};
+        return '<button type="button" data-action="scan-batch-status" data-status="'+s+'" '+
+          'class="btn sm ghost" style="font-size:12px">Mark All '+labels[s]+'</button>';
+      }).join('') +
+    '</div>' +
+
+    '<div style="max-height:420px;overflow-y:auto;padding-right:4px">' +
+      rowsHtml +
+    '</div>' +
+
+    unmatchedHtml +
+
+    '<div style="margin-top:20px;display:flex;gap:12px;align-items:center">' +
+      '<button type="button" class="btn primary" id="scan-commit-btn" style="min-width:220px">' +
+        icon('check') + ' Confirm &amp; Save Attendance' +
+      '</button>' +
+      '<span id="scan-commit-msg" style="font-size:13px;color:var(--muted)"></span>' +
+    '</div>' +
+    '</div>' /* close .card */
+  );
+}
+
+function bindScannerPanel(){
+  var panel = document.getElementById('scanner-panel');
+  if(!panel) return;
+
+  /* File input picker */
+  var pickBtn = document.getElementById('scan-pick-btn');
+  if(pickBtn) pickBtn.addEventListener('click', function(){
+    var inp = document.getElementById('scan-file-input');
+    if(inp) inp.click();
+  });
+
+  var fileInput = document.getElementById('scan-file-input');
+  if(fileInput) fileInput.addEventListener('change', function(e){
+    handleScanFiles(Array.prototype.slice.call(e.target.files));
+  });
+
+  /* Drag-and-drop */
+  var dz = document.getElementById('scan-dropzone');
+  if(dz){
+    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='var(--primary)'; });
+    dz.addEventListener('dragleave', function(){ dz.style.borderColor='var(--border)'; });
+    dz.addEventListener('drop', function(e){
+      e.preventDefault();
+      dz.style.borderColor='var(--border)';
+      handleScanFiles(Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); }));
+    });
+  }
+
+  /* Scan button */
+  var runBtn = document.getElementById('scan-run-btn');
+  if(runBtn) runBtn.addEventListener('click', runScan);
+
+  /* Event delegation for staging panel actions */
+  panel.addEventListener('click', function(e){
+    var t = e.target.closest('[data-action]');
+    if(!t) return;
+    var action = t.dataset.action;
+
+    if(action === 'scan-status'){
+      var idx = parseInt(t.dataset.idx, 10);
+      var st = t.dataset.status;
+      if(scanState.stagingRows[idx]) scanState.stagingRows[idx].status = st;
+      refreshStagingRows();
+    }
+    if(action === 'scan-batch-status'){
+      var bst = t.dataset.status;
+      scanState.stagingRows.forEach(function(r){ r.status = bst; });
+      refreshStagingRows();
+    }
+    if(action === 'scan-remove-img'){
+      var rimIdx = parseInt(t.dataset.idx, 10);
+      scanState.images.splice(rimIdx, 1);
+      renderScanPreviews();
+      updateScanBtn();
+    }
+    if(t.id === 'scan-reset-btn' || action === 'scan-reset'){
+      scanState.images = []; scanState.rawNames = []; scanState.matchResult = null; scanState.stagingRows = [];
+      var sp = document.getElementById('scanner-panel');
+      if(sp){ sp.innerHTML = renderScannerUploadPanel(); bindScannerPanel(); }
+    }
+    if(t.id === 'scan-commit-btn') commitScanAttendance();
+  });
+}
+
+function handleScanFiles(files){
+  var remaining = 4 - scanState.images.length;
+  files.slice(0, remaining).forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      scanState.images.push({dataUrl: e.target.result, file: file});
+      renderScanPreviews();
+      updateScanBtn();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderScanPreviews(){
+  var container = document.getElementById('scan-previews');
+  if(!container) return;
+  container.innerHTML = scanState.images.map(function(img, i){
+    return '<div style="position:relative;display:inline-block">' +
+      '<img src="'+img.dataUrl+'" style="width:100px;height:70px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">' +
+      '<button type="button" data-action="scan-remove-img" data-idx="'+i+'" '+
+        'style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;'+
+        'background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1">×</button>' +
+    '</div>';
+  }).join('');
+}
+
+function updateScanBtn(){
+  var btn = document.getElementById('scan-run-btn');
+  if(btn) btn.disabled = scanState.images.length === 0;
+}
+
+function refreshStagingRows(){
+  var sp = document.getElementById('scanner-panel');
+  if(sp) sp.innerHTML = renderStagingPanel();
+  bindScannerPanel();
+}
+
+/* ---- Core AI scan call ---- */
+function runScan(){
+  if(scanState.processing) return;
+  var cls = (document.getElementById('scan-class') || {}).value || '';
+  var dt = (document.getElementById('scan-date') || {}).value || todayStr();
+
+  if(!cls){ alert('Please select a class before scanning.'); return; }
+  if(scanState.images.length === 0){ alert('Please upload at least one screenshot.'); return; }
+
+  scanState.classId = cls;
+  scanState.date = dt;
+  scanState.processing = true;
+
+  var statusEl = document.getElementById('scan-status');
+  var runBtn = document.getElementById('scan-run-btn');
+  if(statusEl) statusEl.textContent = 'Analysing with AI…';
+  if(runBtn){ runBtn.disabled = true; runBtn.textContent = 'Scanning…'; }
+
+  /* Build Gemini Flash Vision prompt */
+  var parts = [{
+    text: 'You are extracting participant names from online class screenshots (Google Meet, Zoom, Teams, etc.).\n' +
+          'The image may contain Urdu (Nastaliq/Roman), Hindi (Devanagari/Roman), Arabic, or English names.\n' +
+          'Extract ONLY the visible participant/attendee display names from the participant panel or thumbnail grid.\n' +
+          'Exclude: titles like "You", "Host", "Co-Host", "Presentation", numbers, icons.\n' +
+          'Return a JSON object with a single key "names" containing an array of strings.\n' +
+          'Example: {"names": ["Ahmed Raza", "Fatima Zahra", "حمزہ طارق", "Bilal"]}\n' +
+          'Output ONLY valid JSON, nothing else.'
+  }];
+
+  scanState.images.forEach(function(img){
+    var mimeType = img.file.type || 'image/jpeg';
+    var b64 = img.dataUrl.replace(/^data:[^;]+;base64,/, '');
+    parts.push({inline_data: {mime_type: mimeType, data: b64}});
+  });
+
+  var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+  /* Try to call Gemini directly (works in browser/WebView with key), 
+     or route through Cloudflare Worker as proxy (/api/vision) */
+  var apiKey = (typeof NOVA_GEMINI_KEY !== 'undefined') ? NOVA_GEMINI_KEY : '';
+
+  function callViaProxy(){
+    /* Send to our Cloudflare Worker which proxies to Gemini */
+    fetch('https://nova-student-manager.unknownjunge07.workers.dev/api/vision', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({parts: parts})
+    })
+    .then(function(r){ return r.json(); })
+    .then(handleScanResponse)
+    .catch(function(err){ handleScanError(err); });
+  }
+
+  if(apiKey){
+    fetch(GEMINI_URL + '?key=' + apiKey, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{role:'user',parts:parts}]})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.error){ callViaProxy(); return; }
+      handleScanResponse(data);
+    })
+    .catch(function(){ callViaProxy(); });
+  } else {
+    callViaProxy();
+  }
+}
+
+function handleScanResponse(data){
+  scanState.processing = false;
+  try{
+    var text2 = '';
+    if(data.candidates && data.candidates[0] && data.candidates[0].content){
+      text2 = data.candidates[0].content.parts[0].text || '';
+    } else if(data.names){
+      /* direct names array from our worker proxy */
+      processScanNames(data.names); return;
+    }
+    /* parse JSON from AI response */
+    var jsonMatch = text2.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('No JSON in response');
+    var parsed = JSON.parse(jsonMatch[0]);
+    var names = parsed.names || [];
+    processScanNames(names);
+  } catch(e){
+    handleScanError(e);
+  }
+}
+
+function handleScanError(err){
+  scanState.processing = false;
+  var statusEl = document.getElementById('scan-status');
+  var runBtn = document.getElementById('scan-run-btn');
+  if(statusEl) statusEl.textContent = 'Error: ' + (err && err.message ? err.message : 'Could not reach AI service.');
+  if(runBtn){ runBtn.disabled = false; runBtn.innerHTML = icon('scan') + 'Retry Scan'; }
+}
+
+function processScanNames(names){
+  scanState.rawNames = names;
+  /* Get students for selected class */
+  var cls = scanState.classId;
+  var students = (state.students || []).filter(function(s){
+    return s.class === cls && s.status !== 'inactive';
+  });
+
+  var result = matchNamesToStudents(names, students);
+  scanState.matchResult = result;
+
+  /* Build staging rows (all students) */
+  scanState.stagingRows = result.matched.map(function(m){
+    return {
+      studentId: m.student.id,
+      studentName: m.student.name,
+      rawName: m.rawName,
+      status: m.status    // 'P' if detected, 'A' if absent
+    };
+  });
+
+  /* Render staging panel */
+  var sp = document.getElementById('scanner-panel');
+  if(sp) sp.innerHTML = renderStagingPanel();
+  bindScannerPanel();
+}
+
+function commitScanAttendance(){
+  var msgEl = document.getElementById('scan-commit-msg');
+  if(msgEl) msgEl.textContent = 'Saving…';
+
+  var rows = scanState.stagingRows;
+  var dt = scanState.date;
+
+  rows.forEach(function(r){
+    if(r.status) setAttendance(r.studentId, dt, r.status, '', ui.attRegSubject || '');
+  });
+
+  saveNow();
+
+  if(msgEl) msgEl.textContent = '✅ '+rows.length+' records saved!';
+
+  var commitBtn = document.getElementById('scan-commit-btn');
+  if(commitBtn){ commitBtn.disabled = true; commitBtn.style.background = 'var(--success)'; }
+
+  /* Navigate to Attendance tab after 1.5s */
+  setTimeout(function(){
+    ui.attTab = 'register';
+    ui.attRegClass = scanState.classId;
+    navigate('attendance');
+  }, 1500);
+}
+/* END SMART MEET SCANNER */
+
 </script>
 </body>
 </html>
