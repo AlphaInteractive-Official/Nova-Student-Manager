@@ -2,6 +2,7 @@
   "name": "nova-student-manager",
   "compatibility_date": "2026-11-01",
   "assets": {
-    "directory": "./hosting"
+    "directory": "./hosting",
+    "html_handling": "none"
   }
 }

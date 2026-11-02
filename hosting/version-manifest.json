@@ -5,13 +5,13 @@
   "releaseDate": "2026-11-02",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
-  "entryUrl": "https://alphainteractive.github.io/nova-student-manager/app.html",
+  "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
   "entrySha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
   "entrySize": 376031,
   "assets": [
     {
       "file": "app.html",
-      "url": "https://alphainteractive.github.io/nova-student-manager/app.html",
+      "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
       "sha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
       "size": 376031
     }

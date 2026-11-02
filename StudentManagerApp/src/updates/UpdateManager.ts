@@ -11,7 +11,7 @@ import { DataProtectionManager } from '../data/DataProtectionManager';
 export const CURRENT_APK_VERSION = '1.1.04';
 export const CURRENT_APK_VERSION_CODE = 5;
 
-export const DEFAULT_MANIFEST_URL = 'https://alpha-interactive.github.io/nova-student-manager/version-manifest.json';
+export const DEFAULT_MANIFEST_URL = 'https://nova-student-manager.unknownjunge07.workers.dev/version-manifest.json';
 
 export const CACHED_HTML_KEY = '@smh_cached_html_bundle';
 export const CACHED_MANIFEST_KEY = '@smh_cached_html_meta';
