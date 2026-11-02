@@ -6,14 +6,14 @@
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "09e65c66a475709e0b34a7be88f659218d9ca10ef91293dd1b839cd406243d9d",
-  "entrySize": 389892,
+  "entrySha256": "e4152634bf16955167ff79abb844d9d16ebcc59f8741dc46e6815de0948bab6d",
+  "entrySize": 398969,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "09e65c66a475709e0b34a7be88f659218d9ca10ef91293dd1b839cd406243d9d",
-      "size": 389892
+      "sha256": "e4152634bf16955167ff79abb844d9d16ebcc59f8741dc46e6815de0948bab6d",
+      "size": 398969
     }
   ],
   "releaseNotes": "Multi-Teacher account switching with isolated datasets, Subject+Class attendance register, direct WhatsApp image sharing & clipboard copy, live dashboard stats fallback, and native vibration/alert notification bridge.",

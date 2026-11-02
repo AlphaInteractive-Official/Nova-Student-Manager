@@ -1506,6 +1506,147 @@ function addTeacherAccount(name, academy){
   switchTeacher(newId);
 }
 
+
+function openTeacherEditModal(teacherId){
+  var list = getTeachersList();
+  var t = null;
+  for(var i=0; i<list.length; i++){
+    if(list[i].id === teacherId){ t = list[i]; break; }
+  }
+  if(!t) t = getActiveTeacher();
+  var curId = getActiveTeacherId();
+  var isCur = (t.id === curId);
+
+  var allAcademies = getAcademies();
+  var allClasses = getConfiguredClasses();
+  var tClasses = Array.isArray(t.classes) ? t.classes : (t.classes ? String(t.classes).split(',') : []);
+
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">';
+  
+  body += '<div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border)">' +
+    '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;display:grid;place-items:center;font-size:22px">👨‍🏫</div>' +
+    '<div style="flex:1;min-width:0">' +
+      '<div style="font-weight:800;font-size:15px">' + esc(t.name) + (isCur ? ' <span style="font-size:10.5px;padding:2px 8px;border-radius:12px;background:var(--success);color:#fff;font-weight:800">ACTIVE NOW</span>' : '') + '</div>' +
+      '<div class="xs muted" style="margin-top:2px">ID: ' + esc(t.id) + ' · Partition Key: ' + esc(t.key) + '</div>' +
+    '</div>' +
+  '</div>';
+
+  body += '<div class="field" style="margin:0"><label for="editTName" style="font-weight:700">Teacher Full Name</label>' +
+    '<input type="text" id="editTName" value="' + esc(t.name) + '" style="height:40px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:14px;font-weight:600" placeholder="e.g. Ustadh Muhammad / Muallimah Fatima"></div>';
+
+  body += '<div class="field" style="margin:0"><label for="editTAcademy" style="font-weight:700">Primary Academy</label>' +
+    '<input type="text" id="editTAcademy" value="' + esc(t.academy || (allAcademies[0] || '')) + '" style="height:40px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:13.5px;font-weight:600" placeholder="Academy Name"></div>';
+
+  body += '<div class="field" style="margin:0"><label for="editTClasses" style="font-weight:700">Classes Taught (Comma-separated)</label>' +
+    '<input type="text" id="editTClasses" value="' + esc(tClasses.join(', ')) + '" style="height:40px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:13.5px;font-weight:600" placeholder="e.g. Arbi Awwal, Arbi Duwwam, Arabic Grammar">' +
+    '<div class="xs muted" style="margin-top:4px">Common: ' + allClasses.map(function(c){ return '<a href="javascript:void(0)" onclick="addEditTClass(\'' + esc(c) + '\')" style="color:var(--primary);margin-right:6px">+' + esc(c) + '</a>'; }).join('') + '</div>' +
+  '</div>';
+
+  body += '<div class="field" style="margin:0"><label for="editTSubjects" style="font-weight:700">Subject Specializations</label>' +
+    '<input type="text" id="editTSubjects" value="' + esc(t.subjects || '') + '" style="height:40px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:13.5px;font-weight:600" placeholder="e.g. Nahw, Sarf, Arabic Grammar, Fiqh"></div>';
+
+  body += '<div class="field" style="margin:0"><label for="editTPhone" style="font-weight:700">Phone / WhatsApp Contact</label>' +
+    '<input type="tel" id="editTPhone" value="' + esc(t.phone || '') + '" style="height:40px;border-radius:9px;border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:13.5px;font-weight:600" placeholder="+91 / +92 / +1..."></div>';
+
+  body += '</div>';
+
+  var footer = '' +
+    '<button type="button" class="btn" data-action="close-modal">Cancel</button>' +
+    (list.length > 1 && !isCur ? '<button type="button" class="btn danger" id="btnDeleteTeacher" style="margin-right:auto">' + icon('trash') + 'Delete Teacher</button>' : '') +
+    '<button type="button" class="btn primary" id="btnSaveTeacherProfile" style="font-weight:700">' + icon('check') + 'Save Teacher Profile</button>';
+
+  openModal({
+    title: 'Edit Teacher Profile',
+    size: 'md',
+    body: body,
+    footer: footer
+  });
+
+  var btnSave = document.getElementById('btnSaveTeacherProfile');
+  if(btnSave){
+    btnSave.addEventListener('click', function(){
+      var nameVal = (document.getElementById('editTName')?.value || '').trim();
+      var acadVal = (document.getElementById('editTAcademy')?.value || '').trim();
+      var clsVal = (document.getElementById('editTClasses')?.value || '').trim();
+      var subjVal = (document.getElementById('editTSubjects')?.value || '').trim();
+      var phoneVal = (document.getElementById('editTPhone')?.value || '').trim();
+
+      if(!nameVal){
+        toast('Teacher name cannot be blank.', 'warn');
+        return;
+      }
+
+      var clsList = clsVal ? clsVal.split(',').map(function(c){ return c.trim(); }).filter(Boolean) : [];
+
+      // Update in teacher manifest
+      var curList = getTeachersList();
+      for(var j=0; j<curList.length; j++){
+        if(curList[j].id === t.id){
+          curList[j].name = nameVal;
+          curList[j].academy = acadVal;
+          curList[j].classes = clsList;
+          curList[j].subjects = subjVal;
+          curList[j].phone = phoneVal;
+          break;
+        }
+      }
+      safeSetItem(TEACHERS_KEY, JSON.stringify(curList));
+
+      // If active teacher, update active settings
+      if(isCur){
+        if(acadVal && state.settings.academies.indexOf(acadVal) < 0){
+          state.settings.academies.unshift(acadVal);
+        }
+        if(clsList.length){
+          clsList.forEach(function(c){
+            if(state.settings.classList.indexOf(c) < 0) state.settings.classList.push(c);
+          });
+        }
+        saveState();
+      }
+
+      closeModal();
+      updateTeacherBadges();
+      render();
+      toast('Teacher profile for "' + nameVal + '" updated successfully!', 'success');
+    });
+  }
+
+  var btnDel = document.getElementById('btnDeleteTeacher');
+  if(btnDel){
+    btnDel.addEventListener('click', function(){
+      confirmDialog({
+        title: 'Delete Teacher Profile "' + t.name + '"?',
+        message: 'This will remove the teacher from the account list. Note: their saved partition will be unlinked.',
+        confirmText: 'Delete Teacher',
+        danger: true
+      }).then(function(ok){
+        if(!ok) return;
+        var curList = getTeachersList().filter(function(item){ return item.id !== t.id; });
+        safeSetItem(TEACHERS_KEY, JSON.stringify(curList));
+        closeModal();
+        toast('Teacher profile deleted.', 'info');
+        openTeacherSwitchModal();
+      });
+    });
+  }
+}
+
+function addEditTClass(clsName){
+  var el = document.getElementById('editTClasses');
+  if(!el) return;
+  var cur = el.value.trim();
+  if(!cur){
+    el.value = clsName;
+  } else {
+    var parts = cur.split(',').map(function(s){ return s.trim(); });
+    if(parts.indexOf(clsName) < 0){
+      parts.push(clsName);
+      el.value = parts.join(', ');
+    }
+  }
+}
+
 function openTeacherSwitchModal(){
   var list = getTeachersList();
   var curId = getActiveTeacherId();
@@ -1521,7 +1662,10 @@ function openTeacherSwitchModal(){
         '<div style="font-weight:750;font-size:14px;color:var(--text)">' + esc(t.name) + (isCur ? ' <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:var(--success);color:#fff;font-weight:800;margin-left:6px">ACTIVE NOW</span>' : '') + '</div>' +
         '<div class="xs muted" style="margin-top:2px">Primary Academy: ' + esc(t.academy || 'Default Academy') + '</div>' +
       '</div>' +
-      (!isCur ? '<button type="button" class="btn sm primary" data-action="do-switch-teacher" data-id="' + esc(t.id) + '">Switch</button>' : '') +
+      '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+        '<button type="button" class="btn sm" data-action="edit-teacher-profile" data-id="' + esc(t.id) + '" title="Edit teacher details and classes">' + icon('edit') + 'Edit</button>' +
+        (!isCur ? '<button type="button" class="btn sm primary" data-action="do-switch-teacher" data-id="' + esc(t.id) + '">Switch</button>' : '') +
+      '</div>' +
     '</div>';
   });
 
@@ -4720,7 +4864,8 @@ function viewSchedule(el){
   var html = '';
   html += '<div class="page-head"><div><h1>Class Schedule</h1><p>' + state.classes.length + ' scheduled class(es)</p></div>' +
     '<div class="actions">' +
-      '<button type="button" class="btn" data-action="test-notification">' + icon('bell') + 'Test Notification</button>' +
+      '<button type="button" class="btn" data-action="test-notification" title="Send immediate test reminder alert with vibration">' + icon('bell') + 'Test Notification</button>' +
+      '<button type="button" class="btn" data-action="schedule-test-class" title="Schedule a class 2 minutes from now to test real background reminder">' + icon('sparkle') + 'Schedule Live Test Class (2m)</button>' +
       '<button type="button" class="btn primary" data-action="add-class">' + icon('plus') + 'Add Class</button>' +
     '</div></div>';
 
@@ -6122,6 +6267,37 @@ function checkReminders(){
   }
 }
 
+
+function scheduleLiveTestClass(){
+  var now = new Date();
+  var startMo = new Date(now.getTime() + 2 * 60000); // 2 minutes from now
+  var endMo = new Date(now.getTime() + 42 * 60000);
+  var startStr = pad2(startMo.getHours()) + ':' + pad2(startMo.getMinutes());
+  var endStr = pad2(endMo.getHours()) + ':' + pad2(endMo.getMinutes());
+
+  var newCls = {
+    id: uid('cls'),
+    title: '⚡ Live Test Class (Starts in 2m)',
+    subjectId: (state.subjects[0] ? state.subjects[0].id : ''),
+    teacher: (getActiveTeacher() ? getActiveTeacher().name : 'Teacher'),
+    date: todayStr(),
+    start: startStr,
+    end: endStr,
+    room: 'Online Room 1',
+    platform: 'Google Meet',
+    url: 'https://meet.google.com',
+    reminder: 5,
+    recurring: 'none',
+    notes: 'Created to test live notification flow.'
+  };
+
+  state.classes.unshift(newCls);
+  saveState();
+  render();
+  toast('⚡ Test class created for ' + startStr + ' (2 minutes from now)! Reminders will fire automatically within 60 seconds.', 'success', 8000);
+  try{ checkReminders(); }catch(e){}
+}
+
 function testNotification(){
   var msg = 'Class Reminder: "Arabic Grammar Batch" starts in ' + (state.settings.defaultReminder || 5) + ' minutes. Meeting link ready.';
   toast('🔔 ' + msg, 'info', 9000, [{label: 'Open Meeting', run: function(){ window.open('https://meet.google.com', '_blank'); }}]);
@@ -7326,6 +7502,12 @@ document.addEventListener('click', function(e){
     /* Navigation */
     case 'nav': navigate(el.getAttribute('data-view')); break;
     case 'open-teacher-switcher': openTeacherSwitchModal(); break;
+    case 'edit-teacher-profile': {
+      var tid = el.getAttribute('data-id');
+      closeModal();
+      openTeacherEditModal(tid);
+      break;
+    }
     case 'do-switch-teacher': {
       var tid = el.getAttribute('data-id');
       if(tid){
@@ -7601,6 +7783,7 @@ document.addEventListener('click', function(e){
       break;
     case 'request-notif': requestNotificationPermission(); break;
     case 'test-notification': testNotification(); break;
+    case 'schedule-test-class': scheduleLiveTestClass(); break;
 
     case 'add-grade': {
       state.settings.grades.push({min:0, grade:'NEW'});
