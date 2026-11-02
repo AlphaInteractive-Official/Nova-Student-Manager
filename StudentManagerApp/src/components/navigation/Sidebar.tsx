@@ -69,7 +69,7 @@ export const Sidebar: React.FC = () => {
       {/* Footer Branding Requirement */}
       <View style={[styles.sidebarFoot, { borderTopColor: theme.border }]}>
         <Text style={[styles.footBrand, { color: theme.primary }]}>Created by Alpha Interactive</Text>
-        <Text style={[styles.footSub, { color: theme.muted }]}>Offline Manager · Android APK</Text>
+        <Text style={[styles.footSub, { color: theme.muted }]}>Online Manager · Android APK</Text>
       </View>
     </View>
   );

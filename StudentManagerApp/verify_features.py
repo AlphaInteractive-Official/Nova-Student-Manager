@@ -1,4 +1,14 @@
-with open('index.html', 'r', encoding='utf-8') as f:
+import os
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(file_dir)
+index_html_path = os.path.join(root_dir, 'index.html')
+if not os.path.exists(index_html_path):
+    index_html_path = os.path.join(file_dir, 'index.html')
+if not os.path.exists(index_html_path):
+    index_html_path = 'index.html'
+
+with open(index_html_path, 'r', encoding='utf-8') as f:
     text = f.read()
 
 checks = [

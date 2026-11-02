@@ -1,0 +1,25 @@
+{
+  "name": "Nova Student Manager",
+  "version": "1.1.04",
+  "buildCode": 5,
+  "releaseDate": "2026-11-02",
+  "minApkVersionCode": 4,
+  "entryPoint": "app.html",
+  "entryUrl": "https://alphainteractive.github.io/nova-student-manager/app.html",
+  "entrySha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
+  "entrySize": 376031,
+  "assets": [
+    {
+      "file": "app.html",
+      "url": "https://alphainteractive.github.io/nova-student-manager/app.html",
+      "sha256": "95862291c5ebcb2f98ea34859c3bc9389c5f497a89c5b772976ec21617d061cb",
+      "size": 376031
+    }
+  ],
+  "releaseNotes": "Online application updates, zero-data-loss protection architecture, pre-migration snapshot safety, and bilingual rendering optimizations.",
+  "compatibility": {
+    "targetPackage": "com.alphainteractive.studentmanager",
+    "supportedStorageSchema": "v1",
+    "zeroDataLossGuaranteed": true
+  }
+}

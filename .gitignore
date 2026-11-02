@@ -10,3 +10,24 @@ StudentManagerApp/.expo/
 *.log
 .env
 .env.local
+.env.*
+
+# Local backups and exports (Zero-Data-Loss local files)
+*.json (1)*
+*backup*.json*
+student-manager-hub-backup*
+*.keystore
+
+# Build directories and caches
+node_modules/
+StudentManagerApp/node_modules/
+StudentManagerHub/.gradle/
+StudentManagerHub/build/
+StudentManagerHub/app/build/
+StudentManagerApp/android/app/build/
+StudentManagerApp/android/build/
+StudentManagerApp/android/.gradle/
+StudentManagerApp/android/.cxx/
+StudentManagerApp/android/app/.cxx/
+StudentManagerApp/.expo/
+.cxx/

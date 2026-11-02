@@ -112,19 +112,20 @@ a:hover{text-decoration:underline}
   transition:transform .28s cubic-bezier(.4,0,.2,1);
 }
 .brand{
-  display:flex;align-items:center;gap:11px;
-  padding:20px 18px 16px;
+  display:flex;align-items:center;gap:10px;
+  padding:16px 14px 14px;
   min-height:var(--topbar-h);
+  overflow:hidden;
 }
 .brand-logo{
-  width:38px;height:38px;flex:0 0 38px;border-radius:11px;
+  width:34px;height:34px;flex:0 0 34px;border-radius:10px;
   background:linear-gradient(135deg,var(--primary),#8b5cf6);
   display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px rgba(79,70,229,.8);
 }
-.brand-logo svg{width:21px;height:21px}
-.brand-text{min-width:0}
-.brand-text strong{display:block;font-size:14.5px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-text span{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.brand-logo svg{width:18px;height:18px}
+.brand-text{min-width:0;flex:1;overflow:hidden}
+.brand-text strong{display:block;font-size:13.5px;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-text span{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .nav{flex:1;overflow-y:auto;padding:6px 12px 16px;display:flex;flex-direction:column;gap:2px}
 .nav-group-label{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px}
 .nav-item{
@@ -141,17 +142,20 @@ a:hover{text-decoration:underline}
 .sidebar-foot{padding:12px;border-top:1px solid var(--border)}
 .sidebar-foot .hint{font-size:11px;color:var(--muted);line-height:1.45;padding:0 4px}
 
-#main{flex:1;min-width:0;display:flex;flex-direction:column}
+#main{flex:1;min-width:0;display:flex;flex-direction:column;width:100%;max-width:100vw;overflow-x:hidden}
 #topbar{
   position:sticky;top:0;z-index:55;
   height:var(--topbar-h);
-  display:flex;align-items:center;gap:12px;
-  padding:0 22px;
+  display:flex;align-items:center;gap:10px;
+  padding:0 18px;
   background:var(--surface);
   border-bottom:1px solid var(--border);
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
 }
-.topbar-title{font-size:16px;font-weight:700;white-space:nowrap}
-.search-wrap{position:relative;flex:1;max-width:430px;margin-left:auto}
+.topbar-title{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-wrap{position:relative;flex:1;max-width:360px;margin-left:auto;min-width:0}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid transparent;border-radius:11px;padding:0 12px;height:40px;transition:border-color .16s,box-shadow .16s}
 .search-box:focus-within{border-color:var(--primary);box-shadow:var(--ring);background:var(--surface)}
 .search-box svg{width:16px;height:16px;color:var(--muted);flex:0 0 16px}
@@ -1102,7 +1106,7 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
     left:0;
     top:0;
     bottom:0;
-    width:280px;
+    width:270px;
     max-width:85vw;
     height:100vh;
     height:100dvh;
@@ -1115,8 +1119,8 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
   .menu-btn{display:grid}
   .sidebar-close-btn{
     display:grid !important;
-    width:38px;
-    height:38px;
+    width:36px;
+    height:36px;
     border-radius:10px;
     background:var(--surface-2);
     border:1px solid var(--border);
@@ -1124,17 +1128,30 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
   }
   .sidebar-close-btn:hover{background:var(--surface-3);color:var(--danger)}
   .g-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #topbar{padding:0 12px;gap:8px}
+  .topbar-title{font-size:14px;max-width:140px}
+  .search-wrap{max-width:240px}
+  .search-box{height:36px;padding:0 9px;font-size:13px}
+  .icon-btn{width:36px;height:36px}
+  #view{padding:18px 14px 60px}
+  .page-head h1{font-size:21px}
 }
 @media (max-width:760px){
-  :root{--topbar-h:58px}
-  #view{padding:16px 14px 70px}
-  .page-head h1{font-size:20px}
+  :root{--topbar-h:54px}
+  #view{padding:14px 12px 70px}
+  .page-head h1{font-size:19px}
+  .page-head p{font-size:12px}
   .page-head .actions{width:100%;margin-left:0}
   .page-head .actions .btn{flex:1 1 auto}
   .g-2,.g-3,.g-4{grid-template-columns:minmax(0,1fr)}
   .form-grid{grid-template-columns:minmax(0,1fr)}
   .topbar-title{display:none}
+  #topbar{padding:0 10px;gap:6px}
   .search-wrap{margin-left:0;max-width:none}
+  .search-box{height:34px;padding:0 8px;gap:6px}
+  .search-box input{font-size:12px}
+  .search-box svg{width:14px;height:14px;flex:0 0 14px}
+  .icon-btn{width:34px;height:34px}
   .modal{max-width:100%;border-radius:18px}
   .modal-foot{border-radius:0 0 18px 18px}
   .modal-foot .btn{flex:1 1 auto}
@@ -1173,7 +1190,7 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
       </div>
       <div class="brand-text">
         <strong id="brandName">Student Manager Hub</strong>
-        <span>Offline Manager</span>
+        <span>Online Manager</span>
       </div>
       <button type="button" class="icon-btn sidebar-close-btn" data-action="close-sidebar" aria-label="Close navigation" title="Close sidebar" style="margin-left:auto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1182,7 +1199,7 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
     <nav class="nav" id="nav"></nav>
     <div class="sidebar-foot">
       <p class="hint">Created by Alpha Interactive</p>
-      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.1.03</p>
+      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.1.04</p>
     </div>
   </aside>
 
@@ -1417,31 +1434,24 @@ var DEFAULT_GRADES = [
 function defaultState(){
   return {
     students: [],
-    subjects: [
-      { id: 'sub_arb_gram', name: 'عربی گرامر (Arabic Grammar)', klass: 'Arabic Grammar (Morning Batch)', maxMarks: 100, passMarks: 40, color: '#4f46e5' },
-      { id: 'sub_arb_awwal', name: 'عربی اول (Arbi Awwal)', klass: 'Arbi Awwal', maxMarks: 100, passMarks: 40, color: '#0f9d6e' }
-    ],
+    subjects: [],
     attendance: [],
     marks: [],
     classes: [],
     settings: {
       theme: 'system',
-      appName: 'Student Manager Hub',
+      appName: 'Nova Student Manager',
       defaultClass: '',
-      academicYear: '2025-2026',
+      academicYear: '2026-2027',
       academies: [
-        'AL Momina Online Islamic Academy',
-        'Dare Arqam Online Islamic Academy'
+        'Main Academy'
       ],
       classList: [
-        'Arbi Awwal',
-        'Arbi Duwwam',
-        'Arbi Chahrum',
-        'Arabic Grammar (Morning Batch)',
-        'Arabic Grammar (Evening Batch)'
+        'Class 1',
+        'Class 2'
       ],
-      academy1: 'AL Momina Online Islamic Academy',
-      academy2: 'Dare Arqam Online Islamic Academy',
+      academy1: 'Main Academy',
+      academy2: '',
       notifications: false,
       defaultReminder: 5,
       sound: true,
@@ -1451,7 +1461,8 @@ function defaultState(){
         threshold: 50,
         bonusMarks: 20,
         penaltyMarks: 0
-      }
+      },
+      autoUpdateEnabled: true
     }
   };
 }
@@ -1590,6 +1601,9 @@ function parseStateData(parsed){
   if(!out.settings.attendanceRule || typeof out.settings.attendanceRule !== 'object'){
     out.settings.attendanceRule = { threshold: 50, bonusMarks: 20, penaltyMarks: 0 };
   }
+  if(out.settings.autoUpdateEnabled === undefined){
+    out.settings.autoUpdateEnabled = true;
+  }
 
   // Migrate student academies and classes array if needed
   out.students.forEach(function(s){
@@ -1630,7 +1644,7 @@ window.handleNativeRestore = function(jsonStr){
     var incoming = parseStateData(parsed);
     var hasIncoming = (incoming.students && incoming.students.length) || (incoming.marks && incoming.marks.length) || (incoming.attendance && incoming.attendance.length);
     var currentEmpty = (!state.students || state.students.length === 0);
-    if(hasIncoming && (currentEmpty || (incoming.students.length > (state.students ? state.students.length : 0)))){
+    if(hasIncoming && (currentEmpty || (incoming.students.length >= (state.students ? state.students.length : 0)))){
       state = incoming;
       safeSetItem(STORAGE_KEY, JSON.stringify(state));
       safeSetItem('smh_permanent_backup', JSON.stringify(state));
@@ -1641,6 +1655,66 @@ window.handleNativeRestore = function(jsonStr){
     }
   } catch(e){
     console.warn('handleNativeRestore failed:', e);
+  }
+};
+
+window.handleUpdateEvent = function(evt){
+  if(!evt || !evt.type) return;
+  var statusTextEl = document.getElementById('updateStatusText');
+  var actionPanelEl = document.getElementById('updateActionPanel');
+
+  if(evt.type === 'INIT_UPDATE_STATUS'){
+    if(statusTextEl){
+      statusTextEl.textContent = 'Active Engine: v' + (evt.activeVersion || '1.1.04') + (evt.activeSource === 'cached' ? ' (Online Cache)' : ' (Bundled APK)');
+    }
+  } else if(evt.type === 'UPDATE_STATUS'){
+    if(statusTextEl){
+      statusTextEl.textContent = evt.message || evt.status;
+    }
+  } else if(evt.type === 'CHECK_RESULT'){
+    if(evt.status === 'up-to-date'){
+      if(statusTextEl) statusTextEl.textContent = 'Already up to date (v' + (evt.currentVersion || '1.1.04') + ')';
+      toast('Your application is up to date (v' + (evt.currentVersion || '1.1.04') + ').', 'success', 3000);
+    } else if(evt.status === 'available'){
+      if(statusTextEl) statusTextEl.textContent = 'Update available: v' + evt.latestVersion;
+      if(actionPanelEl){
+        actionPanelEl.style.display = 'block';
+        actionPanelEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+          '<div><strong>New Update Available: v' + esc(evt.latestVersion) + '</strong><br>' +
+          '<span class="xs muted">' + esc(evt.releaseNotes || 'Remote web application update.') + '</span></div>' +
+          '<button type="button" class="btn primary sm" data-action="start-download-update" data-manifest=\'' + esc(JSON.stringify(evt.manifest)) + '\'>Download &amp; Verify</button>' +
+          '</div>';
+      }
+      toast('New update available: v' + evt.latestVersion, 'info', 4000);
+    } else if(evt.status === 'requires-apk'){
+      if(statusTextEl) statusTextEl.textContent = 'Native APK Update Required (v' + evt.latestVersion + ')';
+      toast('A new native APK version is required. Please install the APK update.', 'warn', 6000);
+    } else {
+      if(statusTextEl) statusTextEl.textContent = 'Check failed: ' + (evt.error || 'Server unreachable');
+      toast('Could not check for updates. Offline mode active.', 'warn', 3500);
+    }
+  } else if(evt.type === 'UPDATE_READY'){
+    if(statusTextEl) statusTextEl.textContent = 'Update v' + evt.version + ' ready to activate!';
+    if(actionPanelEl){
+      actionPanelEl.style.display = 'block';
+      actionPanelEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+        '<div><strong style="color:var(--success)">Update Verified &amp; Ready (v' + esc(evt.version) + ')</strong><br>' +
+        '<span class="xs muted">Ready to activate. All your student data is preserved.</span></div>' +
+        '<button type="button" class="btn success sm" data-action="activate-update-now">Activate &amp; Reload</button>' +
+        '</div>';
+    }
+    toast('Update v' + evt.version + ' is ready to activate! Go to Settings or tap Activate.', 'success', 7000, [
+      {
+        label: 'Activate Now',
+        run: function(){
+          if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ACTIVATE_UPDATE' }));
+          }
+        }
+      }
+    ]);
+  } else if(evt.type === 'REQUIRES_APK'){
+    toast('New native APK version ' + evt.version + ' released. Please update your APK.', 'info', 6000);
   }
 };
 
@@ -5329,7 +5403,7 @@ function viewSettings(el){
     '<div class="field"><label for="set-appname">App name</label><input id="set-appname" name="appName" value="' + esc(s.appName) + '"></div>' +
     '<div class="field"><label for="set-class">Default class / standard</label><input id="set-class" name="defaultClass" value="' + esc(s.defaultClass) + '" placeholder="e.g. Grade 10"></div>' +
     '<div class="field"><label for="set-year">Default academic year</label><input id="set-year" name="academicYear" value="' + esc(s.academicYear) + '" placeholder="e.g. 2025-2026"></div>' +
-    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.1.03</div></div>' +
+    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.1.04</div></div>' +
     '</div><div style="margin-top:16px"><button type="submit" class="btn primary">' + icon('check') + 'Save Application Settings</button></div></form>';
   html += '</div></div>';
 
@@ -5506,6 +5580,40 @@ function viewSettings(el){
       '<button type="button" class="btn" data-action="clear-attendance">' + icon('trash') + 'Clear All Attendance</button>' +
       '<button type="button" class="btn danger" data-action="clear-data">' + icon('alert') + 'Clear All Application Data</button>' +
     '</div>';
+  html += '</div></div>';
+
+  /* Remote Application Updates & Data Protection */
+  var autoUpd = state.settings.autoUpdateEnabled !== false;
+  html += '<div class="card" style="margin-bottom:16px"><div class="card-head"><h3>' + icon('refresh') + ' Application Updates &amp; Zero-Data-Loss Protection</h3></div><div class="card-pad">';
+  html += '<p class="small muted" style="margin-bottom:14px">Nova Student Manager supports seamless remote web application updates hosted by Alpha Interactive, with guaranteed zero-data-loss protection that preserves your local database across all updates and app restarts.</p>';
+
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
+  html += '<div><strong>Automatic Application Updates</strong><br>' +
+    '<span class="small muted">Automatically download and install available application updates when internet connectivity is available.</span></div>';
+  html += '<button type="button" class="btn ' + (autoUpd ? 'primary' : 'ghost') + '" data-action="toggle-auto-updates">' +
+    (autoUpd ? icon('check') + 'Enabled' : icon('x') + 'Disabled') + '</button>';
+  html += '</div></div>';
+
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
+  html += '<div><strong>Engine &amp; Update Status</strong><br>' +
+    '<span class="small" id="updateStatusText" style="color:var(--text-muted);font-weight:600">Active Engine: v1.1.04 (Online)</span></div>';
+  html += '<button type="button" class="btn" data-action="check-updates">' + icon('refresh') + 'Check for Updates</button>';
+  html += '</div>';
+  html += '<div id="updateActionPanel" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)"></div>';
+  html += '</div>';
+
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px">';
+  html += '<h4 style="font-size:13.5px;margin-bottom:6px">' + icon('shield') + ' Pre-Migration Snapshot &amp; Rollback Safety</h4>';
+  html += '<p class="xs muted" style="margin-bottom:12px">Persistent native storage creates automatic pre-migration snapshots before any major update or schema change. You can also manually trigger a persistent snapshot or rollback.</p>';
+  html += '<div class="row">' +
+    '<button type="button" class="btn sm" data-action="create-migration-backup">' + icon('save') + 'Create Pre-Migration Snapshot</button>' +
+    '<button type="button" class="btn sm ghost" data-action="restore-migration-backup">' + icon('refresh') + 'Restore Pre-Migration Snapshot</button>' +
+    '<button type="button" class="btn sm ghost" data-action="rollback-app-version">' + icon('clock') + 'Rollback Web Engine Version</button>' +
+    '</div>';
+  html += '</div>';
+
   html += '</div></div>';
 
   /* Privacy */
@@ -7286,6 +7394,106 @@ document.addEventListener('click', function(e){
         toast('All application data has been cleared.', 'success');
       });
       break;
+
+    /* Remote Updates & Zero-Data-Loss Migration Actions */
+    case 'toggle-auto-updates': {
+      var nextState = (state.settings.autoUpdateEnabled === false);
+      state.settings.autoUpdateEnabled = nextState;
+      saveState();
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_AUTO_UPDATE', enabled: nextState }));
+      }
+      render();
+      toast('Automatic updates ' + (nextState ? 'enabled' : 'disabled') + '.', 'info');
+      break;
+    }
+    case 'check-updates': {
+      var statEl = document.getElementById('updateStatusText');
+      if(statEl) statEl.textContent = 'Checking for updates...';
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHECK_FOR_UPDATES' }));
+        toast('Checking for remote updates...', 'info', 2500);
+      } else {
+        toast('Update manager is active when running in the Nova Android app.', 'info', 3500);
+      }
+      break;
+    }
+    case 'start-download-update': {
+      var rawManifest = el.getAttribute('data-manifest');
+      var parsedManifest = null;
+      try { parsedManifest = JSON.parse(rawManifest); } catch(err){}
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage && parsedManifest){
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'START_DOWNLOAD_UPDATE', manifest: parsedManifest }));
+        toast('Downloading & verifying update...', 'info', 3000);
+      } else {
+        toast('Could not start download.', 'error');
+      }
+      break;
+    }
+    case 'activate-update-now': {
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+        toast('Activating update and reloading application...', 'info', 4000);
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ACTIVATE_UPDATE' }));
+      }
+      break;
+    }
+    case 'rollback-app-version': {
+      confirmDialog({
+        title: 'Rollback Web Engine Version?',
+        message: 'This will revert the active web application to the previous verified version or original APK bundle.',
+        detail: 'All your student data, attendance, and marks will remain completely safe and untouched.',
+        confirmText: 'Rollback Now'
+      }).then(function(ok){
+        if(!ok) return;
+        if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+          toast('Rolling back application version...', 'info', 3000);
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ROLLBACK_VERSION' }));
+        } else {
+          toast('Rollback is supported within the Nova Android app.', 'info');
+        }
+      });
+      break;
+    }
+    case 'create-migration-backup': {
+      saveNow();
+      if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+        toast('Creating persistent pre-migration snapshot...', 'info', 2500);
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CREATE_MIGRATION_BACKUP' }));
+      } else {
+        safeSetItem('smh_migration_backup_manual', JSON.stringify(state));
+        toast('Pre-migration snapshot saved to persistent storage (' + state.students.length + ' students).', 'success');
+      }
+      break;
+    }
+    case 'restore-migration-backup': {
+      confirmDialog({
+        title: 'Restore Pre-Migration Snapshot?',
+        message: 'This will restore application records from the persistent native pre-migration backup.',
+        detail: 'Any changes made since the snapshot was created will be reverted.',
+        confirmText: 'Restore Snapshot'
+      }).then(function(ok){
+        if(!ok) return;
+        if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+          toast('Restoring snapshot from native storage...', 'info', 3000);
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'RESTORE_MIGRATION_BACKUP' }));
+        } else {
+          var bkp = safeGetItem('smh_migration_backup_manual') || safeGetItem('smh_permanent_backup');
+          if(bkp){
+            try {
+              state = JSON.parse(bkp);
+              saveNow();
+              render();
+              toast('Snapshot restored successfully.', 'success');
+            } catch(e){
+              toast('Could not parse snapshot data.', 'error');
+            }
+          } else {
+            toast('No saved pre-migration snapshot found.', 'warn');
+          }
+        }
+      });
+      break;
+    }
   }
 });
 
