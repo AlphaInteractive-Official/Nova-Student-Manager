@@ -192,6 +192,20 @@ export class DataProtectionManager {
   }
 
   /**
+   * Retrieves the raw migration snapshot metadata if one exists on device.
+   */
+  static async getMigrationBackupMeta(): Promise<MigrationSnapshot | null> {
+    try {
+      const rawBackup = await AsyncStorage.getItem(MIGRATION_BACKUP_KEY);
+      if (!rawBackup) return null;
+      const snapshot: MigrationSnapshot = JSON.parse(rawBackup);
+      return snapshot;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  /**
    * Restores the migration backup if something went wrong during an update.
    */
   static async restoreMigrationBackup(): Promise<any | null> {

@@ -501,6 +501,22 @@ export default function App() {
           break;
         }
 
+        case 'QUERY_MIGRATION_BACKUP': {
+          const bkp = await DataProtectionManager.getMigrationBackupMeta();
+          if (bkp && bkp.data) {
+            const safeBkpJson = JSON.stringify(bkp).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            webViewRef.current?.injectJavaScript(`
+              if(typeof window.onMigrationBackupDiscovered === 'function'){
+                try {
+                  window.onMigrationBackupDiscovered(JSON.parse("${safeBkpJson}"));
+                } catch(e){}
+              }
+              true;
+            `);
+          }
+          break;
+        }
+
         case 'NOTIFICATION': {
           try {
             Vibration.vibrate([0, 250, 150, 250]);

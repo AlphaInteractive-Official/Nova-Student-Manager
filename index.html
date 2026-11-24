@@ -6529,6 +6529,71 @@ var SNAPSHOT_INDEX_KEY = 'smh_snapshots_index_v1';
 var SNAPSHOT_DATA_PREFIX = 'smh_snap_';
 var LAST_AUTO_SNAPSHOT_KEY = 'smh_last_auto_snapshot_time';
 
+function ingestLegacyPreMigrationSnapshot(rawSnapshotOrState, sourceTag){
+  try {
+    if(!rawSnapshotOrState) return;
+    var stateData = rawSnapshotOrState.data || rawSnapshotOrState;
+    if(!stateData || typeof stateData !== 'object') return;
+    if(!Array.isArray(stateData.students)) return;
+
+    var list = getSnapshotsIndex();
+    var legacyId = 'snap_legacy_pre_migration';
+    var alreadyExists = list.some(function(s){ return s.id === legacyId; });
+
+    var timestampStr = rawSnapshotOrState.timestamp || (new Date(Date.now() - 3600000)).toISOString();
+    var tsDate = new Date(timestampStr);
+    var dateLabel = isNaN(tsDate.getTime()) ? 'Pre-Update Archive' : tsDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    var timeLabel = isNaN(tsDate.getTime()) ? 'Historical' : tsDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    var meta = {
+      id: legacyId,
+      timestamp: timestampStr,
+      dateLabel: dateLabel,
+      timeLabel: timeLabel,
+      reason: 'pre-update-archive',
+      label: 'Pre-Update Archive (' + dateLabel + ')',
+      teacherId: 'all_teachers',
+      teacherName: 'Pre-Update Archive',
+      studentCount: (stateData.students || []).length,
+      attendanceCount: (stateData.attendance || []).length,
+      marksCount: (stateData.marks || []).length,
+      classesCount: (stateData.classes || []).length,
+      checksum: computeStateChecksum(stateData)
+    };
+
+    safeSetItem(SNAPSHOT_DATA_PREFIX + legacyId, JSON.stringify(stateData));
+
+    if(!alreadyExists){
+      list.push(meta); // Place historical backup after newer snapshots
+      saveSnapshotsIndex(list);
+    }
+  } catch(e){
+    console.warn('Error ingesting legacy snapshot:', e);
+  }
+}
+
+// Global bridge callback when Native reports existing migration snapshot
+window.onMigrationBackupDiscovered = function(backupData){
+  ingestLegacyPreMigrationSnapshot(backupData, 'native');
+};
+
+function checkAndIngestLocalLegacyBackups(){
+  try {
+    // 1. Check local web migration backups
+    var legacyRaw = safeGetItem('smh_migration_backup_manual') || safeGetItem('smh_permanent_backup');
+    if(legacyRaw){
+      try {
+        var parsed = JSON.parse(legacyRaw);
+        ingestLegacyPreMigrationSnapshot(parsed, 'local');
+      } catch(e){}
+    }
+    // 2. Query Native AsyncStorage migration backup
+    if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'QUERY_MIGRATION_BACKUP' }));
+    }
+  } catch(e){}
+}
+
 function getSnapshotsIndex(){
   try {
     var raw = safeGetItem(SNAPSHOT_INDEX_KEY);
@@ -6694,6 +6759,7 @@ function deleteSnapshotById(snapshotId){
 }
 
 function openSnapshotTimeMachineModal(){
+  checkAndIngestLocalLegacyBackups();
   var list = getSnapshotsIndex();
   var curT = getActiveTeacher();
   var curTid = curT ? curT.id : 'teacher_1';
@@ -6728,12 +6794,13 @@ function openSnapshotTimeMachineModal(){
     list.forEach(function(s, idx){
       var isAuto = s.reason === 'daily-auto';
       var isSafety = s.reason === 'pre-restore-safety';
-      var badgeCol = isAuto ? 'var(--info)' : (isSafety ? 'var(--warn)' : 'var(--primary)');
-      var badgeLabel = isAuto ? '24h Daily Checkpoint' : (isSafety ? 'Pre-Restore Safety' : 'Manual Snapshot');
+      var isLegacy = s.reason === 'pre-update-archive';
+      var badgeCol = isLegacy ? 'var(--accent)' : (isAuto ? 'var(--info)' : (isSafety ? 'var(--warn)' : 'var(--primary)'));
+      var badgeLabel = isLegacy ? 'Pre-Update System Archive' : (isAuto ? '24h Daily Checkpoint' : (isSafety ? 'Pre-Restore Safety' : 'Manual Snapshot'));
 
       body += '<div class="card" style="margin:0;padding:12px 14px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:12px">' +
         '<div style="width:36px;height:36px;border-radius:10px;background:var(--surface-2);color:' + badgeCol + ';display:grid;place-items:center;font-size:16px;font-weight:800 flex-shrink:0">' +
-          (isAuto ? '⏰' : (isSafety ? '🛡️' : '📸')) +
+          (isLegacy ? '📦' : (isAuto ? '⏰' : (isSafety ? '🛡️' : '📸'))) +
         '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
@@ -8702,8 +8769,8 @@ function init(){
   try{ setTimeout(checkReminders, 4000); }catch(e){}
   try{ setInterval(checkReminders, 30000); }catch(e){}
 
-  /* Check 24-hour snapshot schedule */
-  try{ setTimeout(checkDailySnapshotSchedule, 2500); }catch(e){}
+  /* Check 24-hour snapshot schedule & ingest legacy pre-migration backups */
+  try{ setTimeout(function(){ checkDailySnapshotSchedule(); checkAndIngestLocalLegacyBackups(); }, 2500); }catch(e){}
   try{ setInterval(checkDailySnapshotSchedule, 60000); }catch(e){}
 
   if(!storageOK){

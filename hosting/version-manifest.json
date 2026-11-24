@@ -1,22 +1,22 @@
 {
   "name": "Nova Student Manager",
-  "version": "1.3.00",
-  "buildCode": 9,
+  "version": "1.3.01",
+  "buildCode": 10,
   "releaseDate": "2026-11-24",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "061eb6433a7f686eca9869cebc7c6c9cca9aa1dccbc3c2bc8964af32011c8c8d",
-  "entrySize": 440010,
+  "entrySha256": "5a1a71d0dc534320672461b5ed24408bf507141cced940c3485ee98a15816719",
+  "entrySize": 442871,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "061eb6433a7f686eca9869cebc7c6c9cca9aa1dccbc3c2bc8964af32011c8c8d",
-      "size": 440010
+      "sha256": "5a1a71d0dc534320672461b5ed24408bf507141cced940c3485ee98a15816719",
+      "size": 442871
     }
   ],
-  "releaseNotes": "Snapshot Time Machine: automated 24-hour version control checkpoints, point-in-time restore panel, instant auto-safety snapshots before travel, and full multi-teacher dataset isolation.",
+  "releaseNotes": "Automatic bridge and historical ingestion of pre-migration backup archives into the Snapshot Time Machine, allowing instant one-tap restoration of past records directly from the checkpoints list.",
   "compatibility": {
     "targetPackage": "com.alphainteractive.studentmanager",
     "supportedStorageSchema": "v1",
