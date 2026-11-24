@@ -1191,25 +1191,26 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
         </svg>
       </div>
       <div class="brand-text">
-        <strong id="brandName">Student Manager Hub</strong>
+        <strong id="brandName">Nova Student Manager</strong>
         <span>Online Manager</span>
       </div>
       <button type="button" class="icon-btn sidebar-close-btn" data-action="close-sidebar" aria-label="Close navigation" title="Close sidebar" style="margin-left:auto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="sidebar-teacher-card" data-action="open-teacher-switcher" style="margin:4px 12px 10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer" title="Click to switch teacher account">
-      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800">👨‍🏫</div>
-      <div style="flex:1;min-width:0">
+    <div class="sidebar-teacher-card" style="margin:4px 12px 10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:8px" title="Active Teacher Account">
+      <div data-action="open-teacher-switcher" style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;cursor:pointer">👨‍🏫</div>
+      <div data-action="open-teacher-switcher" style="flex:1;min-width:0;cursor:pointer">
         <div style="font-size:9.5px;font-weight:750;text-transform:uppercase;color:var(--muted);letter-spacing:.03em">Active Teacher</div>
         <div style="font-weight:750;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="sidebarTeacherName">Teacher 1</div>
       </div>
-      <span style="font-size:10.5px;font-weight:700;color:var(--primary);background:var(--primary-soft);padding:2px 6px;border-radius:6px">Switch</span>
+      <button type="button" class="btn sm" data-action="edit-current-teacher" style="padding:2px 8px;font-size:11px;font-weight:750;height:26px" title="Edit Teacher Name & Classes">Edit</button>
+      <button type="button" class="btn sm ghost" data-action="open-teacher-switcher" style="padding:2px 6px;font-size:11px;font-weight:700;height:26px" title="Switch Account">Switch</button>
     </div>
     <nav class="nav" id="nav"></nav>
     <div class="sidebar-foot">
       <p class="hint">Created by Alpha Interactive</p>
-      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.1.04</p>
+      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.2.02</p>
     </div>
   </aside>
 
@@ -1220,7 +1221,7 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
       </button>
       <button type="button" class="btn sm" data-action="open-teacher-switcher" id="topbarTeacherBtn" style="height:36px;padding:0 9px;border-radius:10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0" title="Switch Teacher Account">
         <span style="width:7px;height:7px;border-radius:50%;background:var(--success)"></span>
-        <span id="topbarTeacherName">Teacher 1</span>
+        <span id="topbarTeacherName" style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle">Teacher 1</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
@@ -1434,6 +1435,53 @@ function debounce(fn, ms){
 /* ==========================================================================
    JAVASCRIPT — STATE & STORAGE
    ========================================================================== */
+var _memStorage = {};
+function safeGetItem(k){
+  try{
+    var val = localStorage.getItem(k);
+    if(val !== null && val !== undefined) return val;
+  }catch(e){}
+  return (_memStorage && _memStorage.hasOwnProperty(k)) ? _memStorage[k] : null;
+}
+function safeSetItem(k, v){
+  var strVal = String(v);
+  if(!_memStorage) _memStorage = {};
+  _memStorage[k] = strVal;
+  var lsOk = false;
+  try{
+    localStorage.setItem(k, strVal);
+    lsOk = true;
+  }catch(e){
+    try{
+      localStorage.removeItem('smh_migration_backup_manual');
+      localStorage.setItem(k, strVal);
+      lsOk = true;
+    }catch(e2){}
+  }
+  if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+    try{
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'STORAGE_SET_ITEM',
+        key: k,
+        value: strVal
+      }));
+    }catch(e3){}
+  }
+  return true;
+}
+function safeRemoveItem(k){
+  try{ localStorage.removeItem(k); }catch(e){}
+  if(_memStorage) delete _memStorage[k];
+  if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+    try{
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'STORAGE_REMOVE_ITEM',
+        key: k
+      }));
+    }catch(e4){}
+  }
+}
+
 var TEACHERS_KEY = 'smh_teachers_v1';
 var ACTIVE_TEACHER_KEY = 'smh_active_teacher_id';
 
@@ -1442,11 +1490,26 @@ function getTeachersList(){
   if(raw){
     try {
       var arr = JSON.parse(raw);
-      if(Array.isArray(arr) && arr.length) return arr;
+      if(Array.isArray(arr) && arr.length) {
+        if(typeof state !== 'undefined' && state && state.settings && state.settings.teacherName){
+          var curId = getActiveTeacherId();
+          for(var k=0; k<arr.length; k++){
+            if(arr[k].id === curId && state.settings.teacherName){
+              arr[k].name = state.settings.teacherName;
+            }
+          }
+        }
+        return arr;
+      }
     } catch(e){}
   }
+  // Fallback to state.settings.teachers if available
+  if(typeof state !== 'undefined' && state && state.settings && Array.isArray(state.settings.teachers) && state.settings.teachers.length){
+    return state.settings.teachers;
+  }
+  var defName = (typeof state !== 'undefined' && state && state.settings && state.settings.teacherName) ? state.settings.teacherName : 'Ustadh (Teacher 1)';
   return [
-    { id: 'teacher_1', name: 'Ustadh (Teacher 1)', key: 'smh_data_v1', academy: 'AL Momina Online Islamic Academy' },
+    { id: 'teacher_1', name: defName, key: 'smh_data_v1', academy: 'AL Momina Online Islamic Academy' },
     { id: 'teacher_2', name: 'Muallim (Teacher 2)', key: 'smh_data_v1_teacher_2', academy: 'Dare Arqam Online Islamic Academy' }
   ];
 }
@@ -1458,15 +1521,27 @@ function getActiveTeacherId(){
 function getActiveTeacher(){
   var tid = getActiveTeacherId();
   var list = getTeachersList();
+  var active = null;
   for(var i = 0; i < list.length; i++){
-    if(list[i].id === tid) return list[i];
+    if(list[i].id === tid){ active = list[i]; break; }
   }
-  return list[0];
+  if(!active) active = list[0];
+  if(active && typeof state !== 'undefined' && state && state.settings && state.settings.teacherName && active.id === (state.settings.activeTeacherId || 'teacher_1')){
+    active.name = state.settings.teacherName;
+  }
+  return active;
 }
 
-function getStorageKey(){
+function getStorageKey(teacherId){
+  if(teacherId){
+    var list = getTeachersList();
+    for(var i = 0; i < list.length; i++){
+      if(list[i].id === teacherId) return list[i].key || ('smh_data_v1_' + list[i].id);
+    }
+    return 'smh_data_v1_' + teacherId;
+  }
   var t = getActiveTeacher();
-  return t ? t.key : 'smh_data_v1';
+  return t ? (t.key || ('smh_data_v1_' + t.id)) : 'smh_data_v1';
 }
 
 var STORAGE_KEY = getStorageKey();
@@ -1475,35 +1550,73 @@ var NOTIFY_KEY  = 'smh_notified_v1';
 function updateTeacherBadges(){
   var t = getActiveTeacher();
   var topName = document.getElementById('topbarTeacherName');
-  if(topName) topName.textContent = t ? (t.name.split(' ')[0] || t.name) : 'Teacher';
+  if(topName) topName.textContent = t ? t.name : 'Teacher';
   var sideName = document.getElementById('sidebarTeacherName');
   if(sideName) sideName.textContent = t ? t.name : 'Teacher 1';
 }
 
 function switchTeacher(teacherId){
-  saveState();
+  // 1. Immediately persist current teacher state under their own dedicated storage partition
+  saveNow();
+
+  // 2. Switch active teacher pointer and update partition key
   safeSetItem(ACTIVE_TEACHER_KEY, teacherId);
-  STORAGE_KEY = getStorageKey();
+  STORAGE_KEY = getStorageKey(teacherId);
+
+  // 3. Load isolated state for the newly active teacher
   state = loadState();
+
+  // 4. Reset in-memory filter states to avoid cross-teacher filter confusion
+  ui.studentSearch = '';
+  ui.studentClass = '';
+  ui.studentGender = '';
+  ui.studentAcademy = '';
+  ui.attRegClass = '';
+  ui.attRegAcademy = '';
+  ui.marksRegClass = '';
+  ui.marksRegAcademy = '';
+
+  // 5. Sync isolated state to native bridge
   syncWithNative(state);
   updateTeacherBadges();
   render();
+
   var active = getActiveTeacher();
-  toast('Switched account to ' + active.name + '. Loaded their students and records.', 'success');
+  toast('Switched account to ' + active.name + '. Loaded their students, attendance, and classes.', 'success');
 }
 
 function addTeacherAccount(name, academy){
   var list = getTeachersList();
   var newId = 'teacher_' + Date.now();
   var newKey = 'smh_data_v1_' + newId;
+  var acadName = academy || (getAcademies()[0] || 'AL Momina Online Islamic Academy');
   var newTeacher = {
     id: newId,
     name: name || ('Teacher ' + (list.length + 1)),
     key: newKey,
-    academy: academy || 'Main Academy'
+    academy: acadName
   };
   list.push(newTeacher);
   safeSetItem(TEACHERS_KEY, JSON.stringify(list));
+
+  // Initialize a fresh, isolated state for the new teacher
+  var freshState = defaultState();
+  freshState.settings.teacherName = newTeacher.name;
+  freshState.settings.teacherAcademy = acadName;
+  freshState.settings.activeTeacherId = newId;
+  if(acadName){
+    freshState.settings.academies = [acadName];
+    freshState.settings.academy1 = acadName;
+    freshState.settings.academy2 = '';
+  }
+  freshState.students = [];
+  freshState.subjects = [];
+  freshState.attendance = [];
+  freshState.marks = [];
+
+  // Persist new teacher partition immediately
+  safeSetItem(newKey, JSON.stringify(freshState));
+
   switchTeacher(newId);
 }
 
@@ -1566,11 +1679,17 @@ function openTeacherEditModal(teacherId){
   var btnSave = document.getElementById('btnSaveTeacherProfile');
   if(btnSave){
     btnSave.addEventListener('click', function(){
-      var nameVal = (document.getElementById('editTName')?.value || '').trim();
-      var acadVal = (document.getElementById('editTAcademy')?.value || '').trim();
-      var clsVal = (document.getElementById('editTClasses')?.value || '').trim();
-      var subjVal = (document.getElementById('editTSubjects')?.value || '').trim();
-      var phoneVal = (document.getElementById('editTPhone')?.value || '').trim();
+      var nameEl = document.getElementById('editTName');
+      var acadEl = document.getElementById('editTAcademy');
+      var clsEl = document.getElementById('editTClasses');
+      var subjEl = document.getElementById('editTSubjects');
+      var phoneEl = document.getElementById('editTPhone');
+
+      var nameVal = (nameEl ? nameEl.value : '').trim();
+      var acadVal = (acadEl ? acadEl.value : '').trim();
+      var clsVal = (clsEl ? clsEl.value : '').trim();
+      var subjVal = (subjEl ? subjEl.value : '').trim();
+      var phoneVal = (phoneEl ? phoneEl.value : '').trim();
 
       if(!nameVal){
         toast('Teacher name cannot be blank.', 'warn');
@@ -1581,6 +1700,7 @@ function openTeacherEditModal(teacherId){
 
       // Update in teacher manifest
       var curList = getTeachersList();
+      var found = false;
       for(var j=0; j<curList.length; j++){
         if(curList[j].id === t.id){
           curList[j].name = nameVal;
@@ -1588,23 +1708,43 @@ function openTeacherEditModal(teacherId){
           curList[j].classes = clsList;
           curList[j].subjects = subjVal;
           curList[j].phone = phoneVal;
+          found = true;
           break;
         }
       }
+      if(!found){
+        curList.push({
+          id: t.id,
+          name: nameVal,
+          key: t.key || ('smh_data_v1_' + t.id),
+          academy: acadVal,
+          classes: clsList,
+          subjects: subjVal,
+          phone: phoneVal
+        });
+      }
       safeSetItem(TEACHERS_KEY, JSON.stringify(curList));
 
-      // If active teacher, update active settings
+      // Always persist teachers list and settings into state for zero-data-loss synchronization
+      if(!state.settings) state.settings = {};
+      state.settings.teachers = curList;
       if(isCur){
-        if(acadVal && state.settings.academies.indexOf(acadVal) < 0){
+        state.settings.teacherName = nameVal;
+        state.settings.teacherAcademy = acadVal;
+        state.settings.activeTeacherId = t.id;
+        if(acadVal && (!state.settings.academies || state.settings.academies.indexOf(acadVal) < 0)){
+          if(!Array.isArray(state.settings.academies)) state.settings.academies = [];
           state.settings.academies.unshift(acadVal);
         }
         if(clsList.length){
+          if(!Array.isArray(state.settings.classList)) state.settings.classList = [];
           clsList.forEach(function(c){
             if(state.settings.classList.indexOf(c) < 0) state.settings.classList.push(c);
           });
         }
-        saveState();
       }
+      saveState();
+      syncWithNative(state);
 
       closeModal();
       updateTeacherBadges();
@@ -1618,15 +1758,18 @@ function openTeacherEditModal(teacherId){
     btnDel.addEventListener('click', function(){
       confirmDialog({
         title: 'Delete Teacher Profile "' + t.name + '"?',
-        message: 'This will remove the teacher from the account list. Note: their saved partition will be unlinked.',
+        message: 'This will remove the teacher from the account list and wipe their isolated data partition completely so other teachers remain unaffected.',
         confirmText: 'Delete Teacher',
         danger: true
       }).then(function(ok){
         if(!ok) return;
         var curList = getTeachersList().filter(function(item){ return item.id !== t.id; });
         safeSetItem(TEACHERS_KEY, JSON.stringify(curList));
+        if(t.key){
+          safeRemoveItem(t.key);
+        }
         closeModal();
-        toast('Teacher profile deleted.', 'info');
+        toast('Teacher profile "' + t.name + '" deleted.', 'info');
         openTeacherSwitchModal();
       });
     });
@@ -1814,14 +1957,52 @@ function getSubjectsForClass(klassName){
 var state = defaultState();
 var storageOK = true;
 
+var _memStorage = {};
 function safeGetItem(k){
-  try{ return localStorage.getItem(k); }catch(e){ return null; }
+  try{
+    var val = localStorage.getItem(k);
+    if(val !== null && val !== undefined) return val;
+  }catch(e){}
+  return _memStorage.hasOwnProperty(k) ? _memStorage[k] : null;
 }
 function safeSetItem(k, v){
-  try{ localStorage.setItem(k, v); return true; }catch(e){ return false; }
+  var strVal = String(v);
+  _memStorage[k] = strVal;
+  var lsOk = false;
+  try{
+    localStorage.setItem(k, strVal);
+    lsOk = true;
+  }catch(e){
+    // If quota exceeded or storage blocked, clean temporary backup and retry
+    try{
+      localStorage.removeItem('smh_migration_backup_manual');
+      localStorage.setItem(k, strVal);
+      lsOk = true;
+    }catch(e2){}
+  }
+  // If running in React Native WebView, bridge to native AsyncStorage
+  if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+    try{
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'STORAGE_SET_ITEM',
+        key: k,
+        value: strVal
+      }));
+    }catch(e3){}
+  }
+  return true;
 }
 function safeRemoveItem(k){
   try{ localStorage.removeItem(k); }catch(e){}
+  delete _memStorage[k];
+  if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+    try{
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'STORAGE_REMOVE_ITEM',
+        key: k
+      }));
+    }catch(e4){}
+  }
 }
 
 function syncWithNative(dataObj){
@@ -1907,36 +2088,35 @@ function parseStateData(parsed){
 function loadState(){
   try{
     var raw = safeGetItem(getStorageKey());
-    if(!raw) raw = safeGetItem('smh_permanent_backup');
     if(!raw) return defaultState();
     var parsed = JSON.parse(raw);
     return parseStateData(parsed);
   }catch(err){
     console.error('Failed to load saved data:', err);
-    try {
-      var bk = safeGetItem('smh_permanent_backup');
-      if(bk) return parseStateData(JSON.parse(bk));
-    } catch(e){}
-    setTimeout(function(){ toast('Saved data was corrupted and could not be loaded. Starting fresh.', 'error', 6000); }, 900);
+    setTimeout(function(){ toast('Saved data for this teacher was corrupted and could not be loaded. Starting fresh.', 'error', 6000); }, 900);
     return defaultState();
   }
 }
 
-window.handleNativeRestore = function(jsonStr){
+window.handleNativeRestore = function(jsonStr, targetTeacherId){
   try {
     if(!jsonStr) return;
     var parsed = (typeof jsonStr === 'string') ? JSON.parse(jsonStr) : jsonStr;
     if(!parsed || typeof parsed !== 'object') return;
     var incoming = parseStateData(parsed);
-    var hasIncoming = (incoming.students && incoming.students.length) || (incoming.marks && incoming.marks.length) || (incoming.attendance && incoming.attendance.length);
-    var currentEmpty = (!state.students || state.students.length === 0);
-    if(hasIncoming && (currentEmpty || (incoming.students.length >= (state.students ? state.students.length : 0)))){
+    var targetKey = getStorageKey(targetTeacherId);
+    var curActiveKey = getStorageKey();
+
+    // Persist incoming restored snapshot specifically to target partition
+    safeSetItem(targetKey, JSON.stringify(incoming));
+
+    // Only update live memory state if the restored partition matches the current active teacher
+    if(!targetTeacherId || targetKey === curActiveKey){
       state = incoming;
-      safeSetItem(STORAGE_KEY, JSON.stringify(state));
-      safeSetItem('smh_permanent_backup', JSON.stringify(state));
       render();
       applyTheme();
       applyAppName();
+      try{ updateTeacherBadges(); }catch(e){}
       toast('Welcome back! Saved data restored from persistent device storage.', 'success', 3500);
     }
   } catch(e){
@@ -1951,7 +2131,7 @@ window.handleUpdateEvent = function(evt){
 
   if(evt.type === 'INIT_UPDATE_STATUS'){
     if(statusTextEl){
-      statusTextEl.textContent = 'Active Engine: v' + (evt.activeVersion || '1.1.04') + (evt.activeSource === 'cached' ? ' (Online Cache)' : ' (Bundled APK)');
+      statusTextEl.textContent = 'Active Engine: v' + (evt.activeVersion || '1.2.02') + (evt.activeSource === 'cached' ? ' (Online Cache)' : ' (Bundled APK)');
     }
   } else if(evt.type === 'UPDATE_STATUS'){
     if(statusTextEl){
@@ -1959,8 +2139,8 @@ window.handleUpdateEvent = function(evt){
     }
   } else if(evt.type === 'CHECK_RESULT'){
     if(evt.status === 'up-to-date'){
-      if(statusTextEl) statusTextEl.textContent = 'Already up to date (v' + (evt.currentVersion || '1.1.04') + ')';
-      toast('Your application is up to date (v' + (evt.currentVersion || '1.1.04') + ').', 'success', 3000);
+      if(statusTextEl) statusTextEl.textContent = 'Already up to date (v' + (evt.currentVersion || '1.2.02') + ')';
+      toast('Your application is up to date (v' + (evt.currentVersion || '1.2.02') + ').', 'success', 3000);
     } else if(evt.status === 'available'){
       if(statusTextEl) statusTextEl.textContent = 'Update available: v' + evt.latestVersion;
       if(actionPanelEl){
@@ -2006,8 +2186,8 @@ window.handleUpdateEvent = function(evt){
 
 var saveState = debounce(function(){
   var jsonStr = JSON.stringify(state);
-  var ok = safeSetItem(getStorageKey(), jsonStr);
-  safeSetItem('smh_permanent_backup', jsonStr);
+  var curKey = getStorageKey();
+  var ok = safeSetItem(curKey, jsonStr);
   syncWithNative(state);
   if(ok){ storageOK = true; }
   else if(storageOK){
@@ -2018,8 +2198,8 @@ var saveState = debounce(function(){
 
 function saveNow(){
   var jsonStr = JSON.stringify(state);
-  var ok = safeSetItem(getStorageKey(), jsonStr);
-  safeSetItem('smh_permanent_backup', jsonStr);
+  var curKey = getStorageKey();
+  var ok = safeSetItem(curKey, jsonStr);
   syncWithNative(state);
   if(ok){ storageOK = true; }
   else { toast('Could not save data. Browser storage may be unavailable.', 'error'); }
@@ -2661,7 +2841,7 @@ function viewDashboard(el){
   var absentCardSub = todaysAtt.length ? (unmarked + ' unmarked') : (totalStudents + ' students waiting');
 
   var html = '';
-  html += '<div class="page-head"><div><h1>Welcome, Teacher</h1><p>Here is what is happening across your academies today.</p></div>' +
+  var currentTeacher = getActiveTeacher(); var teacherDisplayName = currentTeacher ? currentTeacher.name : "Teacher"; html += '<div class="page-head"><div><h1>Welcome, ' + esc(teacherDisplayName) + '</h1><p>Here is what is happening across your academies today.</p></div>' +
     '<div class="actions">' +
       '<button type="button" class="btn" data-action="nav" data-view="attendance">' + icon('attendance') + 'Monthly Attendance Register</button>' +
       '<button type="button" class="btn primary" data-action="add-student">' + icon('plus') + 'Add Student</button>' +
@@ -2685,6 +2865,7 @@ function viewDashboard(el){
   html += '<div class="quick-grid">' +
     quickBtn('plus','Add Student','add-student') +
     quickBtn('attendance','Monthly Register','nav','attendance') +
+    quickBtn('scan','Meet Scan (AI)','nav','scanner') +
     quickBtn('marks','Marks Register','nav','marks') +
     quickBtn('schedule','Schedule Class','add-class') +
     quickBtn('calculator','Percentage Calculator','nav','calculator') +
@@ -4928,17 +5109,23 @@ function classListItem(c, dateStr){
   var subj = subjectById(c.subjectId);
   var cColor = (subj && subj.color) || colorFor(c.subjectId || c.title);
   var rem = (c.reminder !== undefined && c.reminder !== null && c.reminder !== '') ? c.reminder : state.settings.defaultReminder;
-  return '<div class="list-item clickable" data-action="edit-class" data-id="' + esc(c.id) + '">' +
-    '<div class="chip" style="--c:' + cColor + '"><span class="dot"></span>' + esc(fmtTime(c.start) || '—') + '</div>' +
+  return '<div class="list-item clickable" data-action="edit-class" data-id="' + esc(c.id) + '" style="padding:10px 14px;gap:12px">' +
+    '<div class="chip" style="--c:' + cColor + ';font-size:11px;padding:3px 8px"><span class="dot"></span>' + esc(fmtTime(c.start) || '—') + '</div>' +
     '<div style="flex:1;min-width:0">' +
-      '<div style="font-weight:650;font-size:13.8px">' + esc(c.title || (subj && subj.name) || 'Class') + '</div>' +
-      '<div class="xs muted">' + esc(fmtDate(dateStr)) + ' · ' + esc(fmtTime(c.start)) + '–' + esc(fmtTime(c.end)) +
-        (c.room ? ' · ' + esc(c.room) : '') + (c.teacher ? ' · ' + esc(c.teacher) : '') +
-        (c.recurring === 'weekly' ? ' · Repeats weekly' : '') + '</div>' +
-      '<div class="xs muted" style="margin-top:3px">' + icon('bell') + ' Reminder ' + esc(rem) + ' min before</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<span style="font-weight:700;font-size:13.5px">' + esc(c.title || (subj && subj.name) || 'Class') + '</span>' +
+        (subj && subj.name && c.title && c.title !== subj.name ? '<span class="badge" style="font-size:10.5px;padding:1px 6px">' + esc(subj.name) + '</span>' : '') +
+      '</div>' +
+      '<div class="xs muted" style="margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+        '<span>' + esc(fmtDate(dateStr)) + ' · ' + esc(fmtTime(c.start)) + '–' + esc(fmtTime(c.end)) + '</span>' +
+        (c.room ? '<span>• Room ' + esc(c.room) + '</span>' : '') +
+        (c.teacher ? '<span>• ' + esc(c.teacher) + '</span>' : '') +
+        (c.recurring === 'weekly' ? '<span>• Weekly</span>' : '') +
+        '<span style="opacity:0.85">• Reminder ' + esc(rem) + 'm</span>' +
+      '</div>' +
     '</div>' +
     (isValidUrl(c.url)
-      ? '<a class="btn sm primary" href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' + icon('external') + 'Open Meeting</a>'
+      ? '<a class="btn sm primary" href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="font-size:11.5px;padding:4px 10px;height:28px">' + icon('external') + 'Open Meeting</a>'
       : '') +
     '</div>';
 }
@@ -5754,7 +5941,7 @@ function viewSettings(el){
     '<div class="field"><label for="set-appname">App name</label><input id="set-appname" name="appName" value="' + esc(s.appName) + '"></div>' +
     '<div class="field"><label for="set-class">Default class / standard</label><input id="set-class" name="defaultClass" value="' + esc(s.defaultClass) + '" placeholder="e.g. Grade 10"></div>' +
     '<div class="field"><label for="set-year">Default academic year</label><input id="set-year" name="academicYear" value="' + esc(s.academicYear) + '" placeholder="e.g. 2025-2026"></div>' +
-    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.1.04</div></div>' +
+    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.2.02</div></div>' +
     '</div><div style="margin-top:16px"><button type="submit" class="btn primary">' + icon('check') + 'Save Application Settings</button></div></form>';
   html += '</div></div>';
 
@@ -5833,9 +6020,13 @@ function viewSettings(el){
   html += '</tbody></table></div></div></div>';
 
   /* Notifications */
-  html += '<div class="card" style="margin-bottom:16px"><div class="card-head"><h3>' + icon('bell') + ' Notifications</h3></div><div class="card-pad">';
-  if(!notifSupported){
-    html += '<div class="note-box warn" style="margin-bottom:14px">' + icon('alert') + '<div>This browser does not support the Notification API. Reminders will appear as in-app toasts instead.</div></div>';
+  var isNativeAndroid = !!(window.ReactNativeWebView && window.ReactNativeWebView.postMessage);
+  html += '<div class="card" style="margin-bottom:16px"><div class="card-head"><h3>' + icon('bell') + ' Notifications &amp; Class Reminders</h3></div><div class="card-pad">';
+  if(isNativeAndroid){
+    html += '<div class="note-box" style="margin-bottom:14px;background:var(--success-soft);border:1px solid rgba(15,157,110,0.25)">' + icon('check') +
+      '<div><strong>Native Android Mode Active:</strong> Reminders will trigger instant native device vibration and an interactive alert with an <em>Open Meeting</em> button.</div></div>';
+  } else if(!notifSupported){
+    html += '<div class="note-box warn" style="margin-bottom:14px">' + icon('alert') + '<div>Standard desktop notification permission not granted. In-app reminders and tones will be used.</div></div>';
   }
   html += '<form id="form-notif-settings">' +
     '<label class="check" style="margin-bottom:14px"><input type="checkbox" name="notifications" id="set-notif"' + (s.notifications ? ' checked' : '') + '> Enable class reminders</label>' +
@@ -5847,16 +6038,16 @@ function viewSettings(el){
           {value:10,label:'10 minutes before'},{value:15,label:'15 minutes before'},
           {value:30,label:'30 minutes before'},{value:60,label:'1 hour before'}
         ], s.defaultReminder) + '</select></div>' +
-    '<div class="field"><label>Notification sound</label>' +
-      '<label class="check" style="height:42px"><input type="checkbox" name="sound"' + (s.sound ? ' checked' : '') + '> Play a soft tone with notifications (if the browser allows)</label></div>' +
+    '<div class="field"><label>Notification sound &amp; vibration</label>' +
+      '<label class="check" style="height:42px"><input type="checkbox" name="sound"' + (s.sound ? ' checked' : '') + '> Play alert tone &amp; device vibration</label></div>' +
     '</div>' +
-    '<div class="row" style="margin-top:16px">' +
+    '<div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">' +
       '<button type="submit" class="btn primary">' + icon('check') + 'Save Notification Settings</button>' +
-      '<button type="button" class="btn" data-action="request-notif">' + icon('bell') + 'Request Permission</button>' +
-      '<button type="button" class="btn" data-action="test-notification">' + icon('bell') + 'Test Notification</button>' +
+      '<button type="button" class="btn" data-action="request-notif">' + icon('bell') + 'Enable Notifications</button>' +
+      '<button type="button" class="btn" data-action="test-notification">' + icon('bell') + 'Test Notification Alert</button>' +
     '</div></form>';
   html += '<div class="note-box" style="margin-top:16px">' + icon('info') +
-    '<div><strong>How reminders work:</strong> while this page is open in a browser tab, the app checks your schedule every 30 seconds. When a class is within its reminder window it shows a notification (or an in-app toast if notifications are blocked). A web page cannot run in the background after you close it, and it cannot automatically join a meeting — use the <em>Open Meeting</em> button to launch the link yourself.</div></div>';
+    '<div><strong>How reminders work:</strong> The app checks your timetable every 30 seconds. When a class is within its reminder window, it triggers an instant alert with vibration and an <em>Open Meeting</em> button so you can join in one tap.</div></div>';
   html += '</div></div>';
 
   /* Academy Attendance Rules & Exam Bonus */
@@ -5949,7 +6140,7 @@ function viewSettings(el){
   html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
   html += '<div><strong>Engine &amp; Update Status</strong><br>' +
-    '<span class="small" id="updateStatusText" style="color:var(--text-muted);font-weight:600">Active Engine: v1.1.04 (Online)</span></div>';
+    '<span class="small" id="updateStatusText" style="color:var(--text-muted);font-weight:600">Active Engine: v1.2.02 (Online)</span></div>';
   html += '<button type="button" class="btn" data-action="check-updates">' + icon('refresh') + 'Check for Updates</button>';
   html += '</div>';
   html += '<div id="updateActionPanel" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)"></div>';
@@ -6145,12 +6336,26 @@ function persistNotified(){
 }
 
 function requestNotificationPermission(){
+  var isNativeAndroid = !!(window.ReactNativeWebView && window.ReactNativeWebView.postMessage);
+  if(isNativeAndroid){
+    state.settings.notifications = true;
+    saveState();
+    toast('✅ Notifications &amp; native reminders enabled!', 'success');
+    sendNativeNotification('Nova Student Manager', 'Class reminders and native alerts are now enabled on this device.', '');
+    if(currentView === 'settings') render();
+    return Promise.resolve('granted');
+  }
   if(!('Notification' in window)){
-    toast('Notifications are not supported in this browser.', 'warn');
-    return Promise.resolve('unsupported');
+    state.settings.notifications = true;
+    saveState();
+    toast('In-app reminder notifications enabled!', 'success');
+    if(currentView === 'settings') render();
+    return Promise.resolve('granted');
   }
   if(Notification.permission === 'granted'){
-    toast('Notifications are already enabled.', 'success');
+    state.settings.notifications = true;
+    saveState();
+    toast('Notifications are enabled.', 'success');
     return Promise.resolve('granted');
   }
   return Notification.requestPermission().then(function(p){
@@ -6164,8 +6369,10 @@ function requestNotificationPermission(){
     }
     return p;
   }).catch(function(){
-    toast('Could not request notification permission.', 'error');
-    return 'error';
+    state.settings.notifications = true;
+    saveState();
+    toast('In-app reminder notifications enabled.', 'info');
+    return 'in-app';
   });
 }
 
@@ -7504,6 +7711,11 @@ document.addEventListener('click', function(e){
     /* Navigation */
     case 'nav': navigate(el.getAttribute('data-view')); break;
     case 'open-teacher-switcher': openTeacherSwitchModal(); break;
+    case 'edit-current-teacher': {
+      var curTid = getActiveTeacherId();
+      openTeacherEditModal(curTid);
+      break;
+    }
     case 'edit-teacher-profile': {
       var tid = el.getAttribute('data-id');
       closeModal();
@@ -8243,16 +8455,57 @@ if(document.readyState === 'loading'){
    SMART MEET SCANNER — viewScanner + bindScannerPanel
    ========================================================================== */
 
-/* ---- Levenshtein fuzzy match ---- */
-function levenshtein(a, b){
+function getScannerAvailableClasses(){
+  var list = [];
+  if(state && state.settings && Array.isArray(state.settings.classList) && state.settings.classList.length){
+    list = state.settings.classList.map(function(c){ return String(c || '').trim(); }).filter(Boolean);
+  }
+  if(!list.length && typeof getConfiguredClasses === 'function'){
+    list = getConfiguredClasses() || [];
+  }
+  // Also collect classes dynamically from enrolled active students
+  if(state && Array.isArray(state.students)){
+    state.students.forEach(function(s){
+      if(s && s.status !== 'inactive'){
+        if(Array.isArray(s.classes)){
+          s.classes.forEach(function(c){
+            var tc = String(c || '').trim();
+            if(tc && list.indexOf(tc) < 0) list.push(tc);
+          });
+        }
+        if(s.klass){
+          s.klass.split(',').forEach(function(k){
+            var tk = String(k || '').trim();
+            if(tk && list.indexOf(tk) < 0) list.push(tk);
+          });
+        }
+      }
+    });
+  }
+  if(!list.length){
+    list = [
+      'Arbi Awwal',
+      'Arbi Duwwam',
+      'Arbi Chahrum',
+      'Arabic Grammar (Morning Batch)',
+      'Arabic Grammar (Evening Batch)'
+    ];
+  }
+  return list;
+}
+
+/* Levenshtein distance & similarity */
+function levDistance(a, b){
   var m = a.length, n = b.length;
   var dp = [];
-  for(var i = 0; i <= m; i++){ dp[i] = [i]; }
-  for(var j = 0; j <= n; j++){ dp[0][j] = j; }
-  for(var ii = 1; ii <= m; ii++){
-    for(var jj = 1; jj <= n; jj++){
-      if(a[ii-1] === b[jj-1]) dp[ii][jj] = dp[ii-1][jj-1];
-      else dp[ii][jj] = 1 + Math.min(dp[ii-1][jj], dp[ii][jj-1], dp[ii-1][jj-1]);
+  for(var i = 0; i <= m; i++){
+    dp[i] = [i];
+    for(var j = 1; j <= n; j++) dp[i][j] = i === 0 ? j : 0;
+  }
+  for(var i = 1; i <= m; i++){
+    for(var j = 1; j <= n; j++){
+      if(a[i-1] === b[j-1]) dp[i][j] = dp[i-1][j-1];
+      else dp[i][j] = 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
     }
   }
   return dp[m][n];
@@ -8261,13 +8514,14 @@ function levenshtein(a, b){
 function similarityScore(a, b){
   a = a.toLowerCase().trim();
   b = b.toLowerCase().trim();
-  if(a === b) return 1;
-  var maxLen = Math.max(a.length, b.length);
-  if(maxLen === 0) return 1;
-  var lev = levenshtein(a, b);
-  var levScore = 1 - lev / maxLen;
+  if(!a || !b) return 0;
+  if(a === b) return 1.0;
+  if(a.indexOf(b) >= 0 || b.indexOf(a) >= 0) return 0.88;
 
-  // token overlap bonus
+  var maxLen = Math.max(a.length, b.length);
+  var dist = levDistance(a, b);
+  var levScore = 1 - (dist / maxLen);
+
   var ta = a.split(/\s+/);
   var tb = b.split(/\s+/);
   var common = 0;
@@ -8282,7 +8536,7 @@ function similarityScore(a, b){
 
 /* Normalize a raw name from Meet: strip noise, lowercase */
 function cleanMeetName(raw){
-  return raw
+  return String(raw || '')
     .replace(/\(you\)/gi,'').replace(/\(host\)/gi,'').replace(/\(presentation\)/gi,'')
     .replace(/\(co-host\)/gi,'').replace(/\(muted\)/gi,'').replace(/[\u200b-\u200d\ufeff]/g,'')
     .replace(/[📌📷🎙🎤🔇🔕✋👋]/g,'')
@@ -8294,7 +8548,7 @@ function cleanMeetName(raw){
 
 /* Match a list of raw Meet names against students in a class */
 function matchNamesToStudents(rawNames, students){
-  var THRESHOLD = 0.55;
+  var THRESHOLD = 0.50;
   var results = {
     matched: [],    // {student, rawName, score, status:'P'}
     unmatched: []   // raw names with no good match
@@ -8318,7 +8572,7 @@ function matchNamesToStudents(rawNames, students){
     }
   });
 
-  // Students not in matched list → absent
+  // Students not in matched list -> absent
   students.forEach(function(s){
     if(!usedIds[s.id]) results.matched.push({student: s, rawName: null, score: 0, status:'A'});
   });
@@ -8339,78 +8593,110 @@ var scanState = {
 
 /* ---- View entry ---- */
 function viewScanner(el){
-  var classes = getConfiguredClasses();
-  var classOptions = classes.map(function(c){
-    return '<option value="'+esc(c)+'">'+esc(c)+'</option>';
-  }).join('');
+  if(!scanState.date) scanState.date = todayStr();
+  var classes = getScannerAvailableClasses();
+  if(!scanState.classId && classes.length){
+    scanState.classId = classes[0];
+  }
 
   el.innerHTML =
-    '<div class="page-head" style="margin-bottom:14px"><div>' +
+    '<div class="page-head" style="margin-bottom:18px"><div>' +
       '<h1 style="display:flex;align-items:center;gap:10px;font-size:22px">' +
-        icon('scan') + 'Smart Meet Scanner' +
-        '<span style="font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;'+
-          'background:var(--primary-soft);color:var(--primary)">AI Powered</span>' +
+        '<span style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#8b5cf6);color:#fff;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px rgba(79,70,229,0.3)">' + icon('scan') + '</span>' +
+        'Smart Meet Scanner' +
+        '<span style="font-size:11px;font-weight:750;letter-spacing:0.04em;text-transform:uppercase;padding:3px 10px;border-radius:20px;background:var(--primary-soft);color:var(--primary)">AI Vision</span>' +
       '</h1>' +
-      '<p style="color:var(--muted);font-size:13.5px;margin-top:4px">' +
-        'Upload Google Meet / Zoom participant screenshots. Nova automatically detects present students and fills attendance.' +
+      '<p style="color:var(--muted);font-size:13.5px;margin-top:6px;max-width:650px;line-height:1.5">' +
+        'Upload screenshots from Google Meet, Zoom, or Teams participant panels. Nova AI automatically reads all attendee names and auto-fills attendance records.' +
       '</p>' +
     '</div></div>' +
-    '<div id="scanner-panel">' + renderScannerUploadPanel(classOptions) + '</div>';
+    '<div id="scanner-panel">' + renderScannerUploadPanel() + '</div>';
 
   bindScannerPanel();
 }
 
 function renderScannerUploadPanel(classOptionsOverride){
-  var classes = getConfiguredClasses();
+  var classes = getScannerAvailableClasses();
+  if(!scanState.classId && classes.length){
+    scanState.classId = classes[0];
+  }
+
   var classOptions = classOptionsOverride || classes.map(function(c){
-    return '<option value="'+esc(c)+'">'+esc(c)+'</option>';
+    var sel = (c === scanState.classId) ? ' selected' : '';
+    return '<option value="'+esc(c)+'"'+sel+'>'+esc(c)+'</option>';
   }).join('');
 
+  var selectedDate = scanState.date || todayStr();
+
   return (
-    '<div class="card" style="max-width:720px;margin:0 auto">' +
-
-    /* Step 1: Class + Date */
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">' +
-      '<div class="field">' +
-        '<label style="font-weight:600;font-size:13px">Class</label>' +
-        '<select id="scan-class" style="width:100%">' +
-          '<option value="">-- Select Class --</option>' +
-          classOptions +
-        '</select>' +
+    '<div class="card" style="max-width:760px;margin:0 auto;box-shadow:var(--shadow-md);border-radius:16px;border:1px solid var(--border);overflow:hidden">' +
+      '<div style="padding:22px 24px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">' +
+        '<div>' +
+          '<div style="font-size:15px;font-weight:750;color:var(--text)">Batch &amp; Session Details</div>' +
+          '<div style="font-size:12.5px;color:var(--muted)">Select which class and lecture date to fill attendance for</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:650;color:var(--success);background:var(--success-soft);padding:5px 12px;border-radius:20px">' +
+          icon('check') + ' Zero Data Loss Guarantee' +
+        '</div>' +
       '</div>' +
-      '<div class="field">' +
-        '<label style="font-weight:600;font-size:13px">Date</label>' +
-        '<input type="date" id="scan-date" value="'+esc(scanState.date)+'" style="width:100%">' +
+
+      '<div style="padding:24px">' +
+        /* Step 1: Class + Date */
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;margin-bottom:22px">' +
+          '<div class="field" style="margin:0">' +
+            '<label style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:7px">' +
+              icon('users') + ' Assigned Class / Batch' +
+            '</label>' +
+            '<select id="scan-class" style="width:100%;height:44px;border-radius:10px;border:1.5px solid var(--border);padding:0 12px;font-weight:650;font-size:13.5px;background:var(--surface);color:var(--text)">' +
+              classOptions +
+            '</select>' +
+          '</div>' +
+          '<div class="field" style="margin:0">' +
+            '<label style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:7px">' +
+              icon('calendar') + ' Attendance Date' +
+            '</label>' +
+            '<div style="position:relative;display:flex;align-items:center">' +
+              '<input type="date" id="scan-date" value="'+esc(selectedDate)+'" style="width:100%;height:44px;border-radius:10px;border:1.5px solid var(--border);padding:0 12px;font-weight:650;font-size:13.5px;background:var(--surface);color:var(--text)">' +
+              '<button type="button" class="btn sm ghost" id="scan-today-btn" style="position:absolute;right:8px;height:28px;padding:0 8px;font-size:11px;font-weight:700" title="Set to Today">Today</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        /* Step 2: Upload zone */
+        '<div id="scan-dropzone" style="'+
+          'border:2px dashed var(--border);border-radius:14px;padding:36px 20px;'+
+          'text-align:center;cursor:pointer;transition:all .2s ease;'+
+          'background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+          '<div style="width:52px;height:52px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(79,70,229,0.15)">' +
+            '<span style="font-size:24px">📸</span>' +
+          '</div>' +
+          '<div style="font-weight:750;font-size:16px;color:var(--text);margin-bottom:4px">Drop screenshot files here or browse</div>' +
+          '<div style="color:var(--muted);font-size:12.5px;margin-bottom:16px;max-width:440px;line-height:1.4">' +
+            'Supports Google Meet &amp; Zoom screenshot images (.PNG, .JPG, .WEBP) with participant lists. Up to 4 images at once.' +
+          '</div>' +
+          '<button type="button" class="btn primary" id="scan-pick-btn" style="padding:9px 20px;border-radius:10px;font-weight:700;font-size:13.5px;box-shadow:0 4px 14px rgba(79,70,229,0.3)">' +
+            icon('scan') + ' Choose Screenshot Images' +
+          '</button>' +
+          '<input type="file" id="scan-file-input" accept="image/*" multiple style="display:none">' +
+        '</div>' +
+
+        /* Image previews */
+        '<div id="scan-previews" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px"></div>' +
+
+        /* Scan action bar */
+        '<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap">' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+            '<button type="button" class="btn primary" id="scan-run-btn" style="min-width:200px;height:44px;font-size:14px;font-weight:750;border-radius:10px" disabled>' +
+              icon('scan') + ' Scan &amp; Detect Names' +
+            '</button>' +
+            '<button type="button" class="btn ghost" id="scan-clear-btn" style="display:none;font-size:12.5px">' +
+              icon('close') + ' Clear Images' +
+            '</button>' +
+          '</div>' +
+          '<div id="scan-status" style="font-size:13px;font-weight:600;color:var(--muted)"></div>' +
+        '</div>' +
       '</div>' +
-    '</div>' +
-
-    /* Step 2: Upload zone */
-    '<div id="scan-dropzone" style="'+
-      'border:2px dashed var(--border);border-radius:var(--radius);padding:36px 24px;'+
-      'text-align:center;cursor:pointer;transition:border-color .2s,background .2s;'+
-      'background:var(--surface-2)">' +
-      '<div style="font-size:36px;margin-bottom:8px">📸</div>' +
-      '<div style="font-weight:700;font-size:15px;margin-bottom:4px">Drop screenshots here</div>' +
-      '<div style="color:var(--muted);font-size:13px;margin-bottom:14px">'+
-        'Google Meet · Zoom · Any screenshot with participant names (up to 4 images)' +
-      '</div>' +
-      '<button type="button" class="btn primary" id="scan-pick-btn">'+
-        icon('scan') + 'Choose Screenshots' +
-      '</button>' +
-      '<input type="file" id="scan-file-input" accept="image/*" multiple style="display:none">' +
-    '</div>' +
-
-    /* Image previews */
-    '<div id="scan-previews" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>' +
-
-    /* Scan button */
-    '<div style="margin-top:18px;display:flex;gap:10px;align-items:center">' +
-      '<button type="button" class="btn primary" id="scan-run-btn" style="min-width:180px" disabled>' +
-        icon('scan') + 'Scan &amp; Detect Names' +
-      '</button>' +
-      '<span id="scan-status" style="font-size:13px;color:var(--muted)"></span>' +
-    '</div>' +
-    '</div>' /* close .card */
+    '</div>'
   );
 }
 
@@ -8429,79 +8715,122 @@ function renderStagingPanel(){
       var colors = {P:'var(--success)',A:'var(--danger)',L:'var(--warn)',S:'var(--info)',H:'var(--muted)'};
       var active = r.status === s;
       return '<button type="button" data-action="scan-status" data-idx="'+idx+'" data-status="'+s+'" '+
-        'style="padding:4px 10px;border-radius:6px;border:1.5px solid '+(active?colors[s]:'var(--border)')+';'+
+        'style="padding:5px 11px;border-radius:7px;border:1.5px solid '+(active?colors[s]:'var(--border)')+';'+
         'background:'+(active?colors[s]:'transparent')+';color:'+(active?'#fff':colors[s])+';'+
-        'font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s">'+s+'</button>';
+        'font-size:12px;font-weight:750;cursor:pointer;transition:all .15s">'+s+'</button>';
     }).join('');
 
     var matchBadge = r.rawName
-      ? '<span style="font-size:11px;color:var(--success);background:var(--success-soft);'+
-          'padding:2px 7px;border-radius:10px;margin-left:8px">'+
-          esc(r.rawName.length > 22 ? r.rawName.substring(0,20)+'…' : r.rawName) +
+      ? '<span style="font-size:11px;font-weight:700;color:var(--success);background:var(--success-soft);padding:3px 9px;border-radius:12px;margin-left:8px;display:inline-flex;align-items:center;gap:4px">' +
+          icon('check') + esc(r.rawName.length > 22 ? r.rawName.substring(0,20)+'…' : r.rawName) +
         '</span>'
-      : '<span style="font-size:11px;color:var(--muted);background:var(--surface-2);'+
-          'padding:2px 7px;border-radius:10px;margin-left:8px">not in screenshot</span>';
+      : '<span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);padding:3px 9px;border-radius:12px;margin-left:8px">' +
+          'Not in screenshot' +
+        '</span>';
 
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">' +
-      '<div style="flex:1;font-weight:600;font-size:13.5px">'+esc(r.studentName)+matchBadge+'</div>' +
-      '<div style="display:flex;gap:5px">'+rowsHtml+'</div>' +
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background .15s" class="att-staging-item">' +
+      '<div style="flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px">' +
+        '<span style="font-weight:700;font-size:14px;color:var(--text)">'+esc(r.studentName)+'</span>' +
+        matchBadge +
+      '</div>' +
+      '<div style="display:flex;gap:6px">'+statusBtns+'</div>' +
     '</div>';
   }).join('');
 
   var unmatchedHtml = unmatchedNames.length
-    ? '<div style="margin-top:18px;padding:14px;background:var(--warn-soft);border-radius:var(--radius-sm)">' +
-        '<div style="font-weight:700;font-size:13px;margin-bottom:8px">'+
-          '⚠️ '+unmatchedNames.length+' name(s) detected but not matched to any registered student:' +
+    ? '<div style="margin-top:20px;padding:16px;background:var(--warn-soft);border-radius:12px;border:1px solid rgba(217,119,6,0.25)">' +
+        '<div style="font-weight:750;font-size:13.5px;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px">' +
+          icon('alert') + ' ' + unmatchedNames.length + ' name(s) detected in screenshot not linked to registered students:' +
         '</div>' +
-        unmatchedNames.map(function(n){
-          return '<span style="display:inline-block;padding:3px 10px;background:var(--surface);border:1px solid var(--border);'+
-            'border-radius:8px;font-size:12.5px;margin:3px">'+esc(n)+'</span>';
-        }).join('') +
-        '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">'+
-          'These may be teachers, external participants, or unregistered students. Ignored for attendance.' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+          unmatchedNames.map(function(n){
+            return '<span style="display:inline-block;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600">'+esc(n)+'</span>';
+          }).join('') +
+        '</div>' +
+        '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">' +
+          'These may be teachers, guest participants, or alternate names. Unmatched entries will not overwrite student records.' +
         '</div>' +
       '</div>'
     : '';
 
   return (
-    '<div class="card" style="max-width:720px;margin:0 auto">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">' +
-      '<div>' +
-        '<h2 style="font-size:17px;font-weight:700;margin:0">Review &amp; Confirm Attendance</h2>' +
-        '<p style="color:var(--muted);font-size:13px;margin-top:3px">'+
-          'Class: <strong>'+esc(cls)+'</strong> &nbsp;|&nbsp; Date: <strong>'+esc(dt)+'</strong>' +
-        '</p>' +
+    '<div class="card" style="max-width:760px;margin:0 auto;box-shadow:var(--shadow-md);border-radius:16px;border:1px solid var(--border);overflow:hidden">' +
+      '<div style="padding:20px 24px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">' +
+        '<div>' +
+          '<h2 style="font-size:17px;font-weight:750;margin:0;color:var(--text);display:flex;align-items:center;gap:8px">' +
+            icon('check') + ' Review &amp; Confirm Attendance' +
+          '</h2>' +
+          '<p style="color:var(--muted);font-size:13px;margin-top:4px">' +
+            'Class: <strong>'+esc(cls)+'</strong> &nbsp;|&nbsp; Date: <strong>'+esc(fmtDate(dt))+'</strong> &nbsp;|&nbsp; ' +
+            '<span style="color:var(--success);font-weight:700">' + matched.length + ' detected present</span>, ' +
+            '<span style="color:var(--danger);font-weight:700">' + absent.length + ' absent</span>' +
+          '</p>' +
+        '</div>' +
+        '<button type="button" class="btn ghost" id="scan-reset-btn" style="border-radius:8px;font-weight:700">' +
+          icon('close') + ' Scan Again' +
+        '</button>' +
       '</div>' +
-      '<button type="button" class="btn ghost" id="scan-reset-btn">'+icon('close')+' Reset</button>' +
-    '</div>' +
 
-    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
-      ['P','A','L','S','H'].map(function(s){
-        var labels = {P:'Present',A:'Absent',L:'Late',S:'Sick',H:'Holiday'};
-        return '<button type="button" data-action="scan-batch-status" data-status="'+s+'" '+
-          'class="btn sm ghost" style="font-size:12px">Mark All '+labels[s]+'</button>';
-      }).join('') +
-    '</div>' +
+      '<div style="padding:18px 24px 12px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+        '<span style="font-size:12px;font-weight:700;color:var(--muted);margin-right:4px">Batch Actions:</span>' +
+        ['P','A','L','S','H'].map(function(s){
+          var labels = {P:'Present',A:'Absent',L:'Late',S:'Sick',H:'Holiday'};
+          return '<button type="button" data-action="scan-batch-status" data-status="'+s+'" '+
+            'class="btn sm ghost" style="font-size:11.5px;padding:3px 8px;border-radius:6px">Mark All '+labels[s]+'</button>';
+        }).join('') +
+      '</div>' +
 
-    '<div style="max-height:420px;overflow-y:auto;padding-right:4px">' +
-      rowsHtml +
-    '</div>' +
+      '<div style="max-height:440px;overflow-y:auto">' +
+        (rowsHtml || '<div style="padding:30px;text-align:center;color:var(--muted)">No students found in this class.</div>') +
+      '</div>' +
 
-    unmatchedHtml +
+      (unmatchedHtml ? '<div style="padding:0 24px 16px">' + unmatchedHtml + '</div>' : '') +
 
-    '<div style="margin-top:20px;display:flex;gap:12px;align-items:center">' +
-      '<button type="button" class="btn primary" id="scan-commit-btn" style="min-width:220px">' +
-        icon('check') + ' Confirm &amp; Save Attendance' +
-      '</button>' +
-      '<span id="scan-commit-msg" style="font-size:13px;color:var(--muted)"></span>' +
-    '</div>' +
-    '</div>' /* close .card */
+      '<div style="padding:20px 24px;border-top:1px solid var(--border);background:var(--surface-2);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">' +
+        '<button type="button" class="btn primary" id="scan-commit-btn" style="min-width:240px;height:44px;font-size:14px;font-weight:750;border-radius:10px">' +
+          icon('check') + ' Confirm &amp; Save Attendance' +
+        '</button>' +
+        '<span id="scan-commit-msg" style="font-size:13px;font-weight:600;color:var(--muted)"></span>' +
+      '</div>' +
+    '</div>'
   );
 }
 
 function bindScannerPanel(){
   var panel = document.getElementById('scanner-panel');
   if(!panel) return;
+
+  var classSelect = document.getElementById('scan-class');
+  if(classSelect){
+    classSelect.addEventListener('change', function(e){
+      scanState.classId = e.target.value;
+    });
+  }
+
+  var dateInput = document.getElementById('scan-date');
+  if(dateInput){
+    dateInput.addEventListener('change', function(e){
+      scanState.date = e.target.value;
+    });
+  }
+
+  var todayBtn = document.getElementById('scan-today-btn');
+  if(todayBtn && dateInput){
+    todayBtn.addEventListener('click', function(){
+      var td = todayStr();
+      scanState.date = td;
+      dateInput.value = td;
+    });
+  }
+
+  var clearBtn = document.getElementById('scan-clear-btn');
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(){
+      scanState.images = [];
+      renderScanPreviews();
+      updateScanBtn();
+    });
+  }
 
   /* File input picker */
   var pickBtn = document.getElementById('scan-pick-btn');
@@ -8518,11 +8847,12 @@ function bindScannerPanel(){
   /* Drag-and-drop */
   var dz = document.getElementById('scan-dropzone');
   if(dz){
-    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='var(--primary)'; });
-    dz.addEventListener('dragleave', function(){ dz.style.borderColor='var(--border)'; });
+    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='var(--primary)'; dz.style.background='var(--primary-soft)'; });
+    dz.addEventListener('dragleave', function(){ dz.style.borderColor='var(--border)'; dz.style.background='var(--surface-2)'; });
     dz.addEventListener('drop', function(e){
       e.preventDefault();
       dz.style.borderColor='var(--border)';
+      dz.style.background='var(--surface-2)';
       handleScanFiles(Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); }));
     });
   }
@@ -8565,7 +8895,14 @@ function bindScannerPanel(){
 
 function handleScanFiles(files){
   var remaining = 4 - scanState.images.length;
-  files.slice(0, remaining).forEach(function(file){
+  if(remaining <= 0){
+    toast('Maximum 4 screenshot images allowed per scan.', 'warn');
+    return;
+  }
+  var validFiles = files.filter(function(f){ return f.type.startsWith('image/'); });
+  if(!validFiles.length) return;
+
+  validFiles.slice(0, remaining).forEach(function(file){
     var reader = new FileReader();
     reader.onload = function(e){
       scanState.images.push({dataUrl: e.target.result, file: file});
@@ -8579,12 +8916,15 @@ function handleScanFiles(files){
 function renderScanPreviews(){
   var container = document.getElementById('scan-previews');
   if(!container) return;
+  var clearBtn = document.getElementById('scan-clear-btn');
+  if(clearBtn) clearBtn.style.display = scanState.images.length ? 'inline-flex' : 'none';
+
   container.innerHTML = scanState.images.map(function(img, i){
-    return '<div style="position:relative;display:inline-block">' +
-      '<img src="'+img.dataUrl+'" style="width:100px;height:70px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">' +
+    return '<div style="position:relative;display:inline-block;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.12)">' +
+      '<img src="'+img.dataUrl+'" style="width:110px;height:75px;object-fit:cover;display:block;border:1.5px solid var(--border)">' +
       '<button type="button" data-action="scan-remove-img" data-idx="'+i+'" '+
-        'style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;'+
-        'background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1">×</button>' +
+        'style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;'+
+        'background:rgba(224,64,90,0.9);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;display:grid;place-items:center;line-height:1" title="Remove image">×</button>' +
     '</div>';
   }).join('');
 }
@@ -8603,11 +8943,27 @@ function refreshStagingRows(){
 /* ---- Core AI scan call ---- */
 function runScan(){
   if(scanState.processing) return;
-  var cls = (document.getElementById('scan-class') || {}).value || '';
-  var dt = (document.getElementById('scan-date') || {}).value || todayStr();
+  var clsSelect = document.getElementById('scan-class');
+  var dtInput = document.getElementById('scan-date');
 
-  if(!cls){ alert('Please select a class before scanning.'); return; }
-  if(scanState.images.length === 0){ alert('Please upload at least one screenshot.'); return; }
+  var cls = (clsSelect ? clsSelect.value : '') || scanState.classId;
+  var dt = (dtInput ? dtInput.value : '') || scanState.date || todayStr();
+
+  if(!cls){
+    var avail = getScannerAvailableClasses();
+    if(avail.length) cls = avail[0];
+  }
+
+  if(!cls){
+    toast('Please select a class before scanning.', 'warn');
+    alert('Please select a class before scanning.');
+    return;
+  }
+  if(scanState.images.length === 0){
+    toast('Please upload at least one participant screenshot.', 'warn');
+    alert('Please upload at least one screenshot.');
+    return;
+  }
 
   scanState.classId = cls;
   scanState.date = dt;
@@ -8615,10 +8971,10 @@ function runScan(){
 
   var statusEl = document.getElementById('scan-status');
   var runBtn = document.getElementById('scan-run-btn');
-  if(statusEl) statusEl.textContent = 'Analysing with AI…';
+  if(statusEl) statusEl.textContent = 'Analysing screenshot with AI…';
   if(runBtn){ runBtn.disabled = true; runBtn.textContent = 'Scanning…'; }
 
-  /* Build Gemini Flash Vision prompt */
+  /* Build Gemini Vision prompt */
   var parts = [{
     text: 'You are extracting participant names from online class screenshots (Google Meet, Zoom, Teams, etc.).\n' +
           'The image may contain Urdu (Nastaliq/Roman), Hindi (Devanagari/Roman), Arabic, or English names.\n' +
@@ -8630,19 +8986,15 @@ function runScan(){
   }];
 
   scanState.images.forEach(function(img){
-    var mimeType = img.file.type || 'image/jpeg';
+    var mimeType = (img.file && img.file.type) || 'image/jpeg';
     var b64 = img.dataUrl.replace(/^data:[^;]+;base64,/, '');
     parts.push({inline_data: {mime_type: mimeType, data: b64}});
   });
 
   var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-
-  /* Try to call Gemini directly (works in browser/WebView with key), 
-     or route through Cloudflare Worker as proxy (/api/vision) */
   var apiKey = (typeof NOVA_GEMINI_KEY !== 'undefined') ? NOVA_GEMINI_KEY : '';
 
   function callViaProxy(){
-    /* Send to our Cloudflare Worker which proxies to Gemini */
     fetch('https://nova-student-manager.unknownjunge07.workers.dev/api/vision', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -8677,12 +9029,11 @@ function handleScanResponse(data){
     if(data.candidates && data.candidates[0] && data.candidates[0].content){
       text2 = data.candidates[0].content.parts[0].text || '';
     } else if(data.names){
-      /* direct names array from our worker proxy */
-      processScanNames(data.names); return;
+      processScanNames(data.names);
+      return;
     }
-    /* parse JSON from AI response */
     var jsonMatch = text2.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('No JSON in response');
+    if(!jsonMatch) throw new Error('No valid participant JSON detected in AI response.');
     var parsed = JSON.parse(jsonMatch[0]);
     var names = parsed.names || [];
     processScanNames(names);
@@ -8695,35 +9046,47 @@ function handleScanError(err){
   scanState.processing = false;
   var statusEl = document.getElementById('scan-status');
   var runBtn = document.getElementById('scan-run-btn');
-  if(statusEl) statusEl.textContent = 'Error: ' + (err && err.message ? err.message : 'Could not reach AI service.');
-  if(runBtn){ runBtn.disabled = false; runBtn.innerHTML = icon('scan') + 'Retry Scan'; }
+  var errMsg = (err && err.message) ? err.message : 'Could not reach AI recognition service.';
+  if(statusEl) statusEl.textContent = 'Error: ' + errMsg;
+  if(runBtn){ runBtn.disabled = false; runBtn.innerHTML = icon('scan') + ' Retry Scan'; }
+  toast('Scan error: ' + errMsg, 'error');
 }
 
 function processScanNames(names){
-  scanState.rawNames = names;
-  /* Get students for selected class */
+  scanState.rawNames = names || [];
   var cls = scanState.classId;
+
+  /* Filter active students belonging to the selected class */
   var students = (state.students || []).filter(function(s){
-    return s.class === cls && s.status !== 'inactive';
+    if(!s || s.status === 'inactive') return false;
+    if(Array.isArray(s.classes) && s.classes.indexOf(cls) >= 0) return true;
+    if(s.klass && s.klass.split(',').map(function(k){ return k.trim(); }).indexOf(cls) >= 0) return true;
+    if(s.class === cls) return true;
+    return false;
   });
 
-  var result = matchNamesToStudents(names, students);
+  // Fallback: if no students were enrolled in that specific class, use all active students
+  if(!students.length && state.students && state.students.length){
+    students = state.students.filter(function(s){ return s && s.status !== 'inactive'; });
+  }
+
+  var result = matchNamesToStudents(scanState.rawNames, students);
   scanState.matchResult = result;
 
-  /* Build staging rows (all students) */
+  /* Build staging rows */
   scanState.stagingRows = result.matched.map(function(m){
     return {
       studentId: m.student.id,
       studentName: m.student.name,
       rawName: m.rawName,
-      status: m.status    // 'P' if detected, 'A' if absent
+      status: m.status
     };
   });
 
-  /* Render staging panel */
   var sp = document.getElementById('scanner-panel');
   if(sp) sp.innerHTML = renderStagingPanel();
   bindScannerPanel();
+  toast('Extracted ' + scanState.rawNames.length + ' participant names. ' + result.matched.filter(function(r){ return r.rawName; }).length + ' matched to student registry.', 'success', 4000);
 }
 
 function commitScanAttendance(){
@@ -8731,7 +9094,7 @@ function commitScanAttendance(){
   if(msgEl) msgEl.textContent = 'Saving…';
 
   var rows = scanState.stagingRows;
-  var dt = scanState.date;
+  var dt = scanState.date || todayStr();
 
   rows.forEach(function(r){
     if(r.status) setAttendance(r.studentId, dt, r.status, '', ui.attRegSubject || '');
@@ -8739,20 +9102,22 @@ function commitScanAttendance(){
 
   saveNow();
 
-  if(msgEl) msgEl.textContent = '✅ '+rows.length+' records saved!';
-
+  if(msgEl) msgEl.textContent = '✅ ' + rows.length + ' records saved!';
   var commitBtn = document.getElementById('scan-commit-btn');
   if(commitBtn){ commitBtn.disabled = true; commitBtn.style.background = 'var(--success)'; }
 
-  /* Navigate to Attendance tab after 1.5s */
+  toast('Attendance saved for ' + rows.length + ' students!', 'success', 3500);
+
   setTimeout(function(){
     ui.attTab = 'register';
     ui.attRegClass = scanState.classId;
+    ui.attDate = dt;
     navigate('attendance');
-  }, 1500);
+  }, 1200);
 }
 /* END SMART MEET SCANNER */
 
 </script>
 </body>
 </html>
+

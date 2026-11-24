@@ -1,22 +1,22 @@
 {
   "name": "Nova Student Manager",
-  "version": "1.2.01",
-  "buildCode": 7,
-  "releaseDate": "2026-11-02",
+  "version": "1.2.02",
+  "buildCode": 8,
+  "releaseDate": "2026-11-24",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "5d1640ca387f3b20609a34abcf9f5f512c39e39f4ca0d66b3c7a34ca72aa65b6",
-  "entrySize": 419856,
+  "entrySha256": "b7ceb1d4184d4b01ea35369fdf1a37b1ad2cc3cb59b4a682dc185646b2fec57a",
+  "entrySize": 427733,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "5d1640ca387f3b20609a34abcf9f5f512c39e39f4ca0d66b3c7a34ca72aa65b6",
-      "size": 419856
+      "sha256": "b7ceb1d4184d4b01ea35369fdf1a37b1ad2cc3cb59b4a682dc185646b2fec57a",
+      "size": 427733
     }
   ],
-  "releaseNotes": "Multi-Teacher account switching with isolated datasets, Subject+Class attendance register, direct WhatsApp image sharing & clipboard copy, live dashboard stats fallback, and native vibration/alert notification bridge.",
+  "releaseNotes": "Fix multi-teacher data crosstalk: full teacher isolation for students, attendance, marks, and classes with independent storage partitions.",
   "compatibility": {
     "targetPackage": "com.alphainteractive.studentmanager",
     "supportedStorageSchema": "v1",

@@ -6,6 +6,7 @@ import {
   UpdateManager,
   CACHED_HTML_KEY,
   LAST_CHECK_KEY,
+  CURRENT_APK_VERSION_CODE,
 } from './src/updates/UpdateManager';
 import {
   DataProtectionManager,
@@ -65,6 +66,15 @@ export default function App() {
   useEffect(() => {
     async function initEngine() {
       try {
+        const lastKnownApkCode = await AsyncStorage.getItem('@smh_apk_installed_version_code');
+        if (!lastKnownApkCode || parseInt(lastKnownApkCode, 10) < CURRENT_APK_VERSION_CODE) {
+          console.log('[App] New APK installed or upgraded (' + CURRENT_APK_VERSION_CODE + '). Preferring fresh bundled engine.');
+          await AsyncStorage.removeItem(CACHED_HTML_KEY);
+          await AsyncStorage.setItem('@smh_apk_installed_version_code', String(CURRENT_APK_VERSION_CODE));
+          setActiveHtmlBase64(DEFAULT_HTML_BASE64);
+          return;
+        }
+
         const cachedHtml = await AsyncStorage.getItem(CACHED_HTML_KEY);
         if (cachedHtml && UpdateManager.validateHtml(cachedHtml)) {
           console.log('[App] Loading verified cached remote update bundle.');
@@ -106,12 +116,38 @@ export default function App() {
 
   const restoreDataToWebView = useCallback(async () => {
     try {
-      const savedData = await AsyncStorage.getItem(CANONICAL_STORAGE_KEY);
+      // 1. Restore custom store keys first (teachers manifest & active teacher ID)
+      let activeTeacherId = 'teacher_1';
+      try {
+        const teacherManifest = await AsyncStorage.getItem('@custom_store_smh_teachers_v1');
+        const activeTeacher = await AsyncStorage.getItem('@custom_store_smh_active_teacher_id');
+        if (activeTeacher) {
+          activeTeacherId = activeTeacher;
+        }
+        if (teacherManifest || activeTeacher) {
+          const customCode = `
+            try {
+              ${teacherManifest ? `if(window.safeSetItem) window.safeSetItem('smh_teachers_v1', ${JSON.stringify(teacherManifest)});` : ''}
+              ${activeTeacher ? `if(window.safeSetItem) window.safeSetItem('smh_active_teacher_id', ${JSON.stringify(activeTeacher)});` : ''}
+              if(window.updateTeacherBadges) window.updateTeacherBadges();
+            } catch(e){}
+            true;
+          `;
+          webViewRef.current?.injectJavaScript(customCode);
+        }
+      } catch (e) {}
+
+      // 2. Determine target partition for the active teacher
+      const partitionKey = activeTeacherId === 'teacher_1'
+        ? CANONICAL_STORAGE_KEY
+        : `@custom_store_smh_data_v1_${activeTeacherId}`;
+
+      const savedData = await AsyncStorage.getItem(partitionKey);
       if (savedData && webViewRef.current) {
         const code = `
           try {
             if (window.handleNativeRestore) {
-              window.handleNativeRestore(${JSON.stringify(savedData)});
+              window.handleNativeRestore(${JSON.stringify(savedData)}, ${JSON.stringify(activeTeacherId)});
             }
           } catch(e) {
             console.warn("Restore injection error", e);
@@ -182,14 +218,20 @@ export default function App() {
         case 'SYNC_STATE': {
           if (!msg.payload) break;
 
-          // ZERO-DATA-LOSS GUARD: Validate against empty state overwriting populated data
-          const currentRaw = await AsyncStorage.getItem(CANONICAL_STORAGE_KEY);
+          // Resolve active teacher ID to determine the isolated partition
+          const activeTeacher = await AsyncStorage.getItem('@custom_store_smh_active_teacher_id') || 'teacher_1';
+          const partitionKey = activeTeacher === 'teacher_1'
+            ? CANONICAL_STORAGE_KEY
+            : `@custom_store_smh_data_v1_${activeTeacher}`;
+
+          // ZERO-DATA-LOSS GUARD: Validate against empty state overwriting populated data within THIS teacher's partition
+          const currentRaw = await AsyncStorage.getItem(partitionKey);
           const currentState = currentRaw ? JSON.parse(currentRaw) : null;
           const safetyCheck = DataProtectionManager.isSafeToOverwrite(currentState, msg.payload);
 
           if (!safetyCheck.safe) {
-            console.warn('[App] REJECTED UNSAFE SYNC:', safetyCheck.reason);
-            // Re-inject the real data to WebView
+            console.warn(`[App] REJECTED UNSAFE SYNC for ${partitionKey}:`, safetyCheck.reason);
+            // Re-inject this teacher's real data to WebView
             restoreDataToWebView();
             webViewRef.current?.injectJavaScript(`
               if(window.toast){ toast("Data Protection: Empty state rejected. Preserving saved records.", "warn", 6000); }
@@ -198,8 +240,30 @@ export default function App() {
             break;
           }
 
-          // Safe to persist
-          await AsyncStorage.setItem(CANONICAL_STORAGE_KEY, JSON.stringify(msg.payload));
+          // Safe to persist into teacher's dedicated partition
+          await AsyncStorage.setItem(partitionKey, JSON.stringify(msg.payload));
+          break;
+        }
+
+        case 'STORAGE_SET_ITEM': {
+          if (msg.key && typeof msg.value === 'string') {
+            try {
+              await AsyncStorage.setItem('@custom_store_' + msg.key, msg.value);
+            } catch (e) {
+              console.warn('[App] Failed to save custom store key:', msg.key, e);
+            }
+          }
+          break;
+        }
+
+        case 'STORAGE_REMOVE_ITEM': {
+          if (msg.key) {
+            try {
+              await AsyncStorage.removeItem('@custom_store_' + msg.key);
+            } catch (e) {
+              console.warn('[App] Failed to remove custom store key:', msg.key, e);
+            }
+          }
           break;
         }
 
@@ -564,12 +628,12 @@ export default function App() {
   if (WebViewComponent && isEngineReady) {
     return (
       <View style={styles.nativeContainer}>
-        <StatusBar style="light" backgroundColor="#090D16" />
+        <StatusBar style="light" />
         <WebViewComponent
           ref={webViewRef}
           key={activeHtmlBase64.slice(0, 32)} // Re-mount when base64 changes on update activation
           originWhitelist={['*']}
-          source={{ uri: `data:text/html;charset=utf-8;base64,${activeHtmlBase64}` }}
+          source={{ uri: `data:text/html;charset=utf-8;base64,${activeHtmlBase64}`, baseUrl: 'https://studentmanager.local' }}
           javaScriptEnabled={true}
           domStorageEnabled={true}
           allowFileAccess={true}

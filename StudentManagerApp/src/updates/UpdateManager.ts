@@ -8,8 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sha256 } from './sha256';
 import { DataProtectionManager } from '../data/DataProtectionManager';
 
-export const CURRENT_APK_VERSION = '1.1.04';
-export const CURRENT_APK_VERSION_CODE = 5;
+export const CURRENT_APK_VERSION = '1.2.01';
+export const CURRENT_APK_VERSION_CODE = 7;
 
 export const DEFAULT_MANIFEST_URL = 'https://nova-student-manager.unknownjunge07.workers.dev/version-manifest.json';
 
