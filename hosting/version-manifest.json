@@ -1,22 +1,22 @@
 {
   "name": "Nova Student Manager",
-  "version": "1.2.02",
-  "buildCode": 8,
+  "version": "1.3.00",
+  "buildCode": 9,
   "releaseDate": "2026-11-24",
   "minApkVersionCode": 4,
   "entryPoint": "app.html",
   "entryUrl": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-  "entrySha256": "b7ceb1d4184d4b01ea35369fdf1a37b1ad2cc3cb59b4a682dc185646b2fec57a",
-  "entrySize": 427733,
+  "entrySha256": "061eb6433a7f686eca9869cebc7c6c9cca9aa1dccbc3c2bc8964af32011c8c8d",
+  "entrySize": 440010,
   "assets": [
     {
       "file": "app.html",
       "url": "https://nova-student-manager.unknownjunge07.workers.dev/app.html",
-      "sha256": "b7ceb1d4184d4b01ea35369fdf1a37b1ad2cc3cb59b4a682dc185646b2fec57a",
-      "size": 427733
+      "sha256": "061eb6433a7f686eca9869cebc7c6c9cca9aa1dccbc3c2bc8964af32011c8c8d",
+      "size": 440010
     }
   ],
-  "releaseNotes": "Fix multi-teacher data crosstalk: full teacher isolation for students, attendance, marks, and classes with independent storage partitions.",
+  "releaseNotes": "Snapshot Time Machine: automated 24-hour version control checkpoints, point-in-time restore panel, instant auto-safety snapshots before travel, and full multi-teacher dataset isolation.",
   "compatibility": {
     "targetPackage": "com.alphainteractive.studentmanager",
     "supportedStorageSchema": "v1",

@@ -1210,7 +1210,7 @@ html[data-theme="dark"] .matrix-pop-btn.h{background:#3c1919;color:#f87171}
     <nav class="nav" id="nav"></nav>
     <div class="sidebar-foot">
       <p class="hint">Created by Alpha Interactive</p>
-      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.2.02</p>
+      <p class="hint" style="font-weight:700;margin-top:2px;color:var(--primary)">v1.3.00</p>
     </div>
   </aside>
 
@@ -2131,7 +2131,7 @@ window.handleUpdateEvent = function(evt){
 
   if(evt.type === 'INIT_UPDATE_STATUS'){
     if(statusTextEl){
-      statusTextEl.textContent = 'Active Engine: v' + (evt.activeVersion || '1.2.02') + (evt.activeSource === 'cached' ? ' (Online Cache)' : ' (Bundled APK)');
+      statusTextEl.textContent = 'Active Engine: v' + (evt.activeVersion || '1.3.00') + (evt.activeSource === 'cached' ? ' (Online Cache)' : ' (Bundled APK)');
     }
   } else if(evt.type === 'UPDATE_STATUS'){
     if(statusTextEl){
@@ -2139,8 +2139,8 @@ window.handleUpdateEvent = function(evt){
     }
   } else if(evt.type === 'CHECK_RESULT'){
     if(evt.status === 'up-to-date'){
-      if(statusTextEl) statusTextEl.textContent = 'Already up to date (v' + (evt.currentVersion || '1.2.02') + ')';
-      toast('Your application is up to date (v' + (evt.currentVersion || '1.2.02') + ').', 'success', 3000);
+      if(statusTextEl) statusTextEl.textContent = 'Already up to date (v' + (evt.currentVersion || '1.3.00') + ')';
+      toast('Your application is up to date (v' + (evt.currentVersion || '1.3.00') + ').', 'success', 3000);
     } else if(evt.status === 'available'){
       if(statusTextEl) statusTextEl.textContent = 'Update available: v' + evt.latestVersion;
       if(actionPanelEl){
@@ -5941,7 +5941,7 @@ function viewSettings(el){
     '<div class="field"><label for="set-appname">App name</label><input id="set-appname" name="appName" value="' + esc(s.appName) + '"></div>' +
     '<div class="field"><label for="set-class">Default class / standard</label><input id="set-class" name="defaultClass" value="' + esc(s.defaultClass) + '" placeholder="e.g. Grade 10"></div>' +
     '<div class="field"><label for="set-year">Default academic year</label><input id="set-year" name="academicYear" value="' + esc(s.academicYear) + '" placeholder="e.g. 2025-2026"></div>' +
-    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.2.02</div></div>' +
+    '<div class="field"><label>App version</label><div style="height:42px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-weight:700;font-size:13.5px;color:var(--primary)">1.3.00</div></div>' +
     '</div><div style="margin-top:16px"><button type="submit" class="btn primary">' + icon('check') + 'Save Application Settings</button></div></form>';
   html += '</div></div>';
 
@@ -6140,17 +6140,22 @@ function viewSettings(el){
   html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
   html += '<div><strong>Engine &amp; Update Status</strong><br>' +
-    '<span class="small" id="updateStatusText" style="color:var(--text-muted);font-weight:600">Active Engine: v1.2.02 (Online)</span></div>';
+    '<span class="small" id="updateStatusText" style="color:var(--text-muted);font-weight:600">Active Engine: v1.3.00 (Online)</span></div>';
   html += '<button type="button" class="btn" data-action="check-updates">' + icon('refresh') + 'Check for Updates</button>';
   html += '</div>';
   html += '<div id="updateActionPanel" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)"></div>';
   html += '</div>';
 
   html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px">';
-  html += '<h4 style="font-size:13.5px;margin-bottom:6px">' + icon('shield') + ' Pre-Migration Snapshot &amp; Rollback Safety</h4>';
-  html += '<p class="xs muted" style="margin-bottom:12px">Persistent native storage creates automatic pre-migration snapshots before any major update or schema change. You can also manually trigger a persistent snapshot or rollback.</p>';
-  html += '<div class="row">' +
-    '<button type="button" class="btn sm" data-action="create-migration-backup">' + icon('save') + 'Create Pre-Migration Snapshot</button>' +
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:10px">' +
+    '<div>' +
+      '<h4 style="font-size:14px;font-weight:800;margin:0 0 4px;color:var(--text);display:flex;align-items:center;gap:6px">' + icon('clock') + ' Snapshot Time Machine &amp; Version Control</h4>' +
+      '<p class="xs muted" style="margin:0;max-width:540px;line-height:1.5">Automated snapshots are captured <strong>every 24 hours</strong>. Travel back to any historical date (e.g. Sep 22, Nov 24) or restore freely—an immediate safety checkpoint of today\'s state is saved automatically before traveling.</p>' +
+    '</div>' +
+    '<button type="button" class="btn primary sm" data-action="open-snapshot-time-machine" style="font-weight:750;flex-shrink:0">' + icon('clock') + 'Open Time Machine</button>' +
+  '</div>';
+  html += '<div class="row" style="margin-top:12px;gap:8px">' +
+    '<button type="button" class="btn sm" data-action="create-migration-backup">' + icon('save') + 'Create Instant Checkpoint</button>' +
     '<button type="button" class="btn sm ghost" data-action="restore-migration-backup">' + icon('refresh') + 'Restore Pre-Migration Snapshot</button>' +
     '<button type="button" class="btn sm ghost" data-action="rollback-app-version">' + icon('clock') + 'Rollback Web Engine Version</button>' +
     '</div>';
@@ -6515,6 +6520,271 @@ function testNotification(){
     try{ new Notification('Nova Student Manager — Test Reminder', {body: msg}); }catch(e){}
   }
   playTone();
+}
+
+/* ==========================================================================
+   JAVASCRIPT — SNAPSHOT TIME MACHINE (DAILY VERSION CONTROL & RESTORE)
+   ========================================================================== */
+var SNAPSHOT_INDEX_KEY = 'smh_snapshots_index_v1';
+var SNAPSHOT_DATA_PREFIX = 'smh_snap_';
+var LAST_AUTO_SNAPSHOT_KEY = 'smh_last_auto_snapshot_time';
+
+function getSnapshotsIndex(){
+  try {
+    var raw = safeGetItem(SNAPSHOT_INDEX_KEY);
+    if(raw){
+      var parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) return parsed;
+    }
+  } catch(e){}
+  return [];
+}
+
+function saveSnapshotsIndex(list){
+  safeSetItem(SNAPSHOT_INDEX_KEY, JSON.stringify(list || []));
+}
+
+function computeStateChecksum(st){
+  var str = JSON.stringify({
+    s: (st.students || []).length,
+    a: (st.attendance || []).length,
+    m: (st.marks || []).length,
+    c: (st.classes || []).length
+  });
+  var hash = 0;
+  for(var i=0; i<str.length; i++){
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return String(hash);
+}
+
+function createSnapshotRecord(reason, label){
+  try {
+    var curTeacher = getActiveTeacher();
+    var curTid = curTeacher ? curTeacher.id : 'teacher_1';
+    var curTname = curTeacher ? curTeacher.name : 'Teacher 1';
+    var now = new Date();
+    var id = 'snap_' + now.getTime() + '_' + Math.random().toString(36).substr(2, 5);
+    var dateLabel = now.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    var timeLabel = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    var meta = {
+      id: id,
+      timestamp: now.toISOString(),
+      dateLabel: dateLabel,
+      timeLabel: timeLabel,
+      reason: reason || 'manual',
+      label: label || (dateLabel + ' ' + timeLabel),
+      teacherId: curTid,
+      teacherName: curTname,
+      studentCount: (state.students || []).length,
+      attendanceCount: (state.attendance || []).length,
+      marksCount: (state.marks || []).length,
+      classesCount: (state.classes || []).length,
+      checksum: computeStateChecksum(state)
+    };
+
+    var storageKey = SNAPSHOT_DATA_PREFIX + id;
+    var stateJson = JSON.stringify(state);
+    var ok = safeSetItem(storageKey, stateJson);
+    if(!ok){
+      toast('Storage space full: could not save snapshot.', 'warn', 5000);
+      return null;
+    }
+
+    var list = getSnapshotsIndex();
+    list.unshift(meta);
+
+    // Keep up to 60 snapshots in history (covers 2 full months of daily snapshots)
+    if(list.length > 60){
+      var removed = list.slice(60);
+      list = list.slice(0, 60);
+      removed.forEach(function(r){
+        safeRemoveItem(SNAPSHOT_DATA_PREFIX + r.id);
+      });
+    }
+
+    saveSnapshotsIndex(list);
+    return meta;
+  } catch(err){
+    console.warn('Failed to create snapshot:', err);
+    return null;
+  }
+}
+
+function checkDailySnapshotSchedule(){
+  try {
+    var last = safeGetItem(LAST_AUTO_SNAPSHOT_KEY);
+    var now = Date.now();
+    var dayMs = 24 * 60 * 60 * 1000;
+    if(!last || (now - parseInt(last, 10)) >= dayMs){
+      // Ensure we only take automatic snapshots if there are students or records
+      var hasData = (state.students && state.students.length > 0) || (state.attendance && state.attendance.length > 0);
+      if(hasData){
+        var snap = createSnapshotRecord('daily-auto', 'Automated 24h Daily Checkpoint');
+        if(snap){
+          safeSetItem(LAST_AUTO_SNAPSHOT_KEY, String(now));
+          console.log('[Snapshot Time Machine] Automated 24h snapshot created:', snap.id);
+        }
+      } else {
+        safeSetItem(LAST_AUTO_SNAPSHOT_KEY, String(now));
+      }
+    }
+  } catch(e){}
+}
+
+function restoreSnapshotById(snapshotId){
+  var list = getSnapshotsIndex();
+  var targetMeta = null;
+  for(var i=0; i<list.length; i++){
+    if(list[i].id === snapshotId){ targetMeta = list[i]; break; }
+  }
+  if(!targetMeta){
+    toast('Snapshot not found.', 'error');
+    return;
+  }
+
+  var raw = safeGetItem(SNAPSHOT_DATA_PREFIX + snapshotId);
+  if(!raw){
+    toast('Snapshot payload is missing or was cleared by browser cleanup.', 'error');
+    return;
+  }
+
+  var incomingState;
+  try {
+    incomingState = parseStateData(JSON.parse(raw));
+  } catch(err){
+    toast('Snapshot data is corrupted and cannot be restored.', 'error');
+    return;
+  }
+
+  // SAFETY REQUIREMENT: Automatically create an immediate safety snapshot of the CURRENT data
+  // before overwriting, so the user can easily travel back if they change their mind!
+  var safetySnap = createSnapshotRecord('pre-restore-safety', 'Auto Safety Backup before traveling to ' + targetMeta.label);
+
+  // Restore state into active working state
+  state = incomingState;
+  saveNow();
+  render();
+  applyTheme();
+  applyAppName();
+  try{ updateTeacherBadges(); }catch(e){}
+
+  closeModal();
+
+  var msg = 'Time Machine: Restored snapshot from ' + targetMeta.label + ' (' + targetMeta.studentCount + ' students). Safety checkpoint saved!';
+  toast(msg, 'success', 6000);
+}
+
+function deleteSnapshotById(snapshotId){
+  confirmDialog({
+    title: 'Delete Snapshot?',
+    message: 'Are you sure you want to delete this historical snapshot? This snapshot cannot be recovered once removed.',
+    confirmText: 'Delete Snapshot',
+    danger: true
+  }).then(function(ok){
+    if(!ok) return;
+    safeRemoveItem(SNAPSHOT_DATA_PREFIX + snapshotId);
+    var list = getSnapshotsIndex().filter(function(s){ return s.id !== snapshotId; });
+    saveSnapshotsIndex(list);
+    toast('Snapshot deleted.', 'info');
+    openSnapshotTimeMachineModal();
+  });
+}
+
+function openSnapshotTimeMachineModal(){
+  var list = getSnapshotsIndex();
+  var curT = getActiveTeacher();
+  var curTid = curT ? curT.id : 'teacher_1';
+
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">';
+  body += '<div style="font-size:13px;color:var(--muted);line-height:1.55">' +
+    'Travel back to any point-in-time snapshot. Snapshots are created <strong>automatically every 24 hours</strong> ' +
+    'and before any restore. When you restore a past date, a safety snapshot of your current state is captured automatically, allowing you to return whenever you wish.' +
+    '</div>';
+
+  body += '<div style="display:flex;gap:10px;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border)">' +
+    '<div>' +
+      '<div style="font-weight:750;font-size:13.5px">📸 Capture Instant Snapshot Now</div>' +
+      '<div class="xs muted">Saves an immediate point-in-time state checkpoint for ' + esc(curT ? curT.name : 'Active Teacher') + '.</div>' +
+    '</div>' +
+    '<button type="button" class="btn primary sm" id="btnCaptureManualSnap" style="flex-shrink:0">' + icon('plus') + 'Create Snapshot</button>' +
+  '</div>';
+
+  body += '<div style="font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:space-between;margin-top:4px">' +
+    '<span>Historical Snapshots (' + list.length + ')</span>' +
+    '<span class="xs muted">Retains up to 60 checkpoints</span>' +
+  '</div>';
+
+  if(!list.length){
+    body += '<div style="text-align:center;padding:36px 16px;background:var(--surface-2);border-radius:12px;border:1px dashed var(--border)">' +
+      '<div style="font-size:32px;margin-bottom:8px">⏳</div>' +
+      '<div style="font-weight:750;font-size:14px">No Snapshots Yet</div>' +
+      '<div class="xs muted" style="margin-top:4px;max-width:320px;margin-inline:auto">Snapshots will automatically appear here every 24 hours, or you can tap Create Snapshot above to take your first one right now.</div>' +
+      '</div>';
+  } else {
+    body += '<div style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding-right:4px">';
+    list.forEach(function(s, idx){
+      var isAuto = s.reason === 'daily-auto';
+      var isSafety = s.reason === 'pre-restore-safety';
+      var badgeCol = isAuto ? 'var(--info)' : (isSafety ? 'var(--warn)' : 'var(--primary)');
+      var badgeLabel = isAuto ? '24h Daily Checkpoint' : (isSafety ? 'Pre-Restore Safety' : 'Manual Snapshot');
+
+      body += '<div class="card" style="margin:0;padding:12px 14px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:12px">' +
+        '<div style="width:36px;height:36px;border-radius:10px;background:var(--surface-2);color:' + badgeCol + ';display:grid;place-items:center;font-size:16px;font-weight:800 flex-shrink:0">' +
+          (isAuto ? '⏰' : (isSafety ? '🛡️' : '📸')) +
+        '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+            '<span style="font-weight:750;font-size:13.5px;color:var(--text)">' + esc(s.dateLabel) + ' at ' + esc(s.timeLabel) + '</span>' +
+            '<span style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:750;background:var(--surface-2);color:' + badgeCol + ';border:1px solid var(--border)">' + badgeLabel + '</span>' +
+          '</div>' +
+          '<div class="xs muted" style="margin-top:3px">' +
+            'Teacher: <strong>' + esc(s.teacherName || 'Default') + '</strong> · ' +
+            esc(s.studentCount || 0) + ' Students · ' +
+            esc(s.attendanceCount || 0) + ' Att Records · ' +
+            esc(s.marksCount || 0) + ' Marks' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+          '<button type="button" class="btn sm primary" data-action="time-machine-restore" data-id="' + esc(s.id) + '" title="Restore this historical snapshot">' + icon('refresh') + 'Restore</button>' +
+          '<button type="button" class="icon-btn danger btn-del-snap" data-id="' + esc(s.id) + '" title="Delete snapshot" aria-label="Delete snapshot">' + icon('trash') + '</button>' +
+        '</div>' +
+      '</div>';
+    });
+    body += '</div>';
+  }
+
+  body += '</div>';
+
+  openModal({
+    title: 'Snapshot Time Machine — Version Control',
+    size: 'lg',
+    body: body,
+    footer: '<button type="button" class="btn" data-action="close-modal">Done</button>'
+  });
+
+  var btnCap = document.getElementById('btnCaptureManualSnap');
+  if(btnCap){
+    btnCap.addEventListener('click', function(){
+      var snap = createSnapshotRecord('manual', 'Manual User Snapshot');
+      if(snap){
+        toast('Snapshot captured for ' + snap.dateLabel + ' ' + snap.timeLabel, 'success');
+        openSnapshotTimeMachineModal();
+      }
+    });
+  }
+
+  // Bind individual delete snapshot buttons
+  var delBtns = document.querySelectorAll('.btn-del-snap');
+  delBtns.forEach(function(b){
+    b.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var snapId = b.getAttribute('data-id');
+      if(snapId) deleteSnapshotById(snapId);
+    });
+  });
 }
 
 /* ==========================================================================
@@ -8141,6 +8411,24 @@ document.addEventListener('click', function(e){
       });
       break;
     }
+    case 'open-snapshot-time-machine': {
+      openSnapshotTimeMachineModal();
+      break;
+    }
+    case 'time-machine-restore': {
+      if(id){
+        confirmDialog({
+          title: 'Restore Historical Snapshot?',
+          message: 'Are you sure you want to restore this historical snapshot? All current students and attendance will be replaced with this checkpoint.',
+          detail: 'Safety Guarantee: An automatic safety checkpoint of your current state will be created right now before restoring, so you can return to today\'s state anytime!',
+          confirmText: 'Restore Checkpoint'
+        }).then(function(ok){
+          if(!ok) return;
+          restoreSnapshotById(id);
+        });
+      }
+      break;
+    }
     case 'create-migration-backup': {
       saveNow();
       if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
@@ -8413,6 +8701,10 @@ function init(){
 
   try{ setTimeout(checkReminders, 4000); }catch(e){}
   try{ setInterval(checkReminders, 30000); }catch(e){}
+
+  /* Check 24-hour snapshot schedule */
+  try{ setTimeout(checkDailySnapshotSchedule, 2500); }catch(e){}
+  try{ setInterval(checkDailySnapshotSchedule, 60000); }catch(e){}
 
   if(!storageOK){
     setTimeout(function(){
